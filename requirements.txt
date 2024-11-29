@@ -1,0 +1,2 @@
+hidapi==0.14.0.post4
+setuptools==75.6.0
