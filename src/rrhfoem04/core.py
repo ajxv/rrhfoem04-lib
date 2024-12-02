@@ -100,7 +100,7 @@ class RRHFOEM04:
             response = self._send_command(CMD_BUZZER)
             
             # Just in case. Response is almost always empty
-            if response[3:5] != STATUS_SUCCESS :
+            if response and response[3:5] != STATUS_SUCCESS :
                 print(f"Error sounding buzzer: {self._byte_list_to_hex_string(response[3:5])}")
                 return False
             
