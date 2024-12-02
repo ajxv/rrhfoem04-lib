@@ -39,13 +39,12 @@ class RRHFOEM04:
         Returns:
             int: Calculated CRC value
         """
-        crc = CRC_INIT
-        for byte in data:
-            crc ^= byte
+        crc = 0xFFFF
+        for byte in data:   # loop each byte
+            crc ^= byte     # calc crc main logic
             for _ in range(8):
-                crc = ((crc << 1) ^ CRC_POLY) if crc & 0x8000 else (crc << 1)
-                crc &= 0xFFFF
-        return (~crc) & 0xFFFF
+                crc = ((crc << 1) ^ 0x1021) if crc & 0x8000 else (crc << 1)
+        return (~crc)       # invert crc before returning
 
 
     def _send_command(self, cmd_data: List[int]) -> Optional[List[int]]:
