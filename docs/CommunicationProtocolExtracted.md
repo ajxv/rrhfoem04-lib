@@ -1,0 +1,188 @@
+
+# RRHFOEM04 Communication Protocol
+
+## Request Frame Length / Response Frame Length
+
+- **Request Frame Length**: It is the number of bytes that shall be calculated by adding the total number of bytes starting from the "Command Code" field to the "Cyclic Redundancy Check (CRC)" field. If a specific request is not having any data, the frame length for request and response will vary accordingly.
+- **Response Frame Length**: Calculated similarly to the request frame, depending on the presence or absence of data.
+
+---
+
+## Command Code
+
+- The command code specifies the action to be performed. Below are the command codes supported:
+
+### ISO 15693 Command Codes:
+
+| Sr. No. | Command Code | Description                           |
+|---------|--------------|---------------------------------------|
+| 1       | 1001Hex      | Single Slot Inventory                |
+| 2       | 1002Hex      | 16 Slot Inventory                    |
+| 3       | 1003Hex      | Select                               |
+| 4       | 1004Hex      | Quiet                                |
+| 5       | 1005Hex      | Reset                                |
+| 6       | 1006Hex      | Read Single Block                    |
+| 7       | 1007Hex      | Write Single Block                   |
+| 8       | 1008Hex      | Lock Block                           |
+| 9       | 1009Hex      | Read Multiple Blocks                 |
+| 10      | 100AHex      | Write AFI Flag                       |
+| 11      | 100BHex      | Lock AFI Flag                        |
+| 12      | 100CHex      | Write DSFID Flag                     |
+| 13      | 100DHex      | Lock DSFID Flag                      |
+| 14      | 100EHex      | Get System Information               |
+| 15      | 100FHex      | Get Multiple Block Security Status   |
+| 16      | 1101Hex      | Read EAS Flag                        |
+| 17      | 1102Hex      | Set EAS Flag                         |
+| 18      | 1103Hex      | Reset EAS Flag                       |
+| 19      | 1104Hex      | Lock EAS Flag                        |
+| 20      | 1201Hex      | Write Two Blocks (TAGIT)             |
+| 21      | 1202Hex      | Lock Two Blocks (TAGIT)              |
+| 22      | 1F02Hex      | Write Multiple Blocks                |
+
+---
+
+### ISO 14443A Command Codes:
+
+| Sr. No. | Command Code | Description                  |
+|---------|--------------|------------------------------|
+| 1       | 2001Hex      | Request                     |
+| 2       | 2002Hex      | Wake up                     |
+| 3       | 2006Hex      | Anti-collision              |
+| 4       | 2004Hex      | Select                      |
+| 5       | 2005Hex      | Halt                        |
+| 6       | 2101Hex      | Mifare Authenticate         |
+| 7       | 2102Hex      | Mifare Read                 |
+| 8       | 2103Hex      | Mifare Write                |
+| 9       | 2201Hex      | Mifare UL Read              |
+| 10      | 2202Hex      | Mifare UL Write             |
+| 11      | 2F01Hex      | Inventory                   |
+| 12      | 2F02Hex      | Select Card                 |
+
+---
+
+### RFID System Level Command Codes:
+
+| Sr. No. | Command Code | Description                  |
+|---------|--------------|------------------------------|
+| 1       | 0001Hex      | Low Power Mode              |
+| 2       | 0002Hex      | Normal Power Mode           |
+| 3       | 0003Hex      | Set RF Power                |
+| 4       | 0004Hex      | RF Turn ON                  |
+| 5       | 0005Hex      | RF Turn OFF                 |
+
+---
+
+### RR System Level Command Codes:
+
+| Sr. No. | Command Code | Description                            |
+|---------|--------------|----------------------------------------|
+| 1       | F000Hex      | Get Reader Information                |
+| 2       | F001Hex      | Buzzer (Beep)                         |
+| 3       | F002Hex      | Additional Frame (Valid for USB only) |
+| 4       | FF03Hex      | Reset Device / Restart Device         |
+
+---
+
+## Flags
+
+- **Flags** specify the action to be performed by the tag (VICC) and whether the corresponding fields are present or not.
+
+| Sr. No. | Flag Value | Flag Type          |
+|---------|------------|--------------------|
+| 1       | 02Hex      | Data Rate Flag     |
+| 2       | 20Hex      | Address Flag       |
+| 3       | 10Hex      | Select Flag        |
+| 4       | 40Hex      | Option Flag        |
+| 5       | 04Hex      | Inventory Flag     |
+
+---
+
+## Cyclic Redundancy Check (CRC)
+
+- **CRC** is used to ensure no data loss during communication. It is calculated from the "Request Frame Length" field up to the "Custom Request Data" field.
+
+### CRC Structure:
+
+| Bit Position | Description |
+|--------------|-------------|
+| LSB (8 bits) | Least Significant Byte |
+| MSB (8 bits) | Most Significant Byte |
+
+### CRC Logic (Pseudocode):
+
+```c
+unsigned short CalcCRC(unsigned char data[], unsigned char len) {
+    unsigned short crc = 0xFFFF;
+    unsigned char count, bitCount;
+
+    for (count = 0; count < len; count++) {
+        crc ^= data[count];
+        for (bitCount = 0; bitCount < 8; bitCount++) {
+            crc = (crc & 0x8000) ? (crc << 1) ^ 0x1021 : (crc << 1);
+        }
+    }
+    return (~crc);
+}
+```
+# Basic Communication Frame Format
+
+## Request
+
+| Sr. No. | Parameter               | Length | Data        |
+|---------|-------------------------|--------|-------------|
+| 1       | Request Frame Length    | 1      | XXHex       |
+| 2       | Command Code            | 2      | XXXXHex     |
+| 3       | Custom Request Data     | X      | XX...XXHex  |
+| 4       | Cyclic Redundancy Check | 2      | XXXXHex     |
+
+## Response
+
+| Sr. No. | Parameter               | Length | Data        |
+|---------|-------------------------|--------|-------------|
+| 1       | Response Frame Length   | 1      | 01 to FFHex |
+| 2       | Command Code            | 2      | XXXXHex     |
+| 3       | Error Code              | 2      | XXXXHex     |
+| 4       | Custom Response Data    | X      | XX...XXHex  |
+| 5       | Cyclic Redundancy Check | 2      | XXXXHex     |
+
+# ISO 15693 Commands
+
+## Single Slot Inventory
+
+### Request (With AFI)
+
+| Sr. No. | Parameter               | Length (Byte) | Data     |
+|---------|-------------------------|---------------|----------|
+| 1       | Request Frame Length    | 1             | 05Hex    |
+| 2       | Command Code            | 2             | 1001Hex  |
+| 3       | Flags                   | 1             | 36Hex    |
+| 4       | AFI                     | 1             | XXHex    |
+| 5       | Cyclic Redundancy Check | 2             | XXXXHex  |
+
+### Request (Without AFI)
+
+| Sr. No. | Parameter               | Length (Byte) | Data     |
+|---------|-------------------------|---------------|----------|
+| 1       | Request Frame Length    | 1             | 04Hex    |
+| 2       | Command Code            | 2             | 1001Hex  |
+| 3       | Flags                   | 1             | 26Hex    |
+| 4       | Cyclic Redundancy Check | 2             | XXXXHex  |
+
+### Response
+
+| Sr. No. | Parameter               | Length (Byte) | Data                     |
+|---------|-------------------------|---------------|--------------------------|
+| 1       | Response Frame Length   | 1             | XXHex                   |
+| 2       | Command Code            | 2             | 1001Hex                 |
+| 3       | Error Code              | 2             | XXXXHex                 |
+| 4       | Total no. of Received UID | 1           | XXHex                   |
+| 5       | UID                     | X             | XXXX...XXXXHex (8 bytes) |
+| 6       | Cyclic Redundancy Check | 2             | XXXXHex                 |
+
+**Error Code:** If error code is `FFFFHex`, then the length will be limited to 05Hex, and fields 4 & 5 will be absent; otherwise, the error code is `0000Hex`.
+
+**Total no. of Received UID:** The total number of cards that exist in the reading area.
+
+**UID:** UID of cards that are detected (Total no. of Received UIDs × 8 bytes).
+
+
