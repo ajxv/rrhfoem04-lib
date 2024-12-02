@@ -90,6 +90,20 @@ class TestRRHFOEM04(unittest.TestCase):
                 print(f"Data read at block [{block_number}]: {block_data}")
         except Exception as e:
             self.fail(f"Unexpected error: {e}")
+    
+    def test_ISO15693_writeSingleBlock(self):
+        """Test ISO14443A inventory scan"""
+        try:
+            block_number = 0
+            data = "ACC1"
+            # write_success = self.reader.ISO15693_writeSingleBlock(block_number, data, uid="A86E33E8080802E0")
+            # write_success = self.reader.ISO15693_writeSingleBlock(block_number, data, with_select_flag=True)
+            write_success = self.reader.ISO15693_writeSingleBlock(block_number, data)
+            self.assertTrue(write_success, "Error Writing ISO15693 single block")
+            
+            print(f"Successfully written data: [{data}] at block: [{block_number}]")
+        except Exception as e:
+            self.fail(f"Unexpected error: {e}")
 
 
 if __name__ == "__main__":

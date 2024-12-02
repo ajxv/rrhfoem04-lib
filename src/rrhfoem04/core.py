@@ -125,7 +125,7 @@ class RRHFOEM04:
         """
         try:
             # Send command to get reader information
-            response = self._send_command(CMD_GET_INFO)
+            response = self._send_command(CMD_GET_READER_INFO)
             if not response:
                 print("No response received from get_reader_info command")
                 return None
@@ -298,7 +298,7 @@ class RRHFOEM04:
                 else:
                     cmd = CMD_ISO15693_READ_SINGLE_BLOCK
                 
-            # common part to be appended at the end
+            # common part to be appended to cmd
             cmd.extend([block_size, block_number])
 
             response = self._send_command(cmd)
@@ -314,6 +314,63 @@ class RRHFOEM04:
         except Exception as e:
             print(f"Error in ISO15693_readSingleBlock: {str(e)}")
             return None
+
+
+    def ISO15693_writeSingleBlock(self, block_number: int, data: str, block_size: int = 4, with_select_flag: bool = False, uid: str = None) -> bool:
+        """
+        Write to a single block of an ISO15693 tag.
+        
+        Args:
+            block_number: The block number to read (0-255)
+            data: Data to be written
+            with_select_flag: If True, uses the Select flag for previously selected tags
+            uid: If provided, uses Address flag to target a specific tag by UID
+            
+        Returns:
+            True if data successfully written to block, or False if the write failed
+            
+        Note: According to the protocol, you must either:
+        - Use no flags (reads any tag in field)
+        - Use the Select flag (reads previously selected tag)
+        - Use the Address flag with UID (reads specific tag)
+        """
+        try:
+            # Validate block number
+            if not 0 <= block_number <= 255:
+                raise ValueError("Block number must be between 0 and 255")
+            
+            # Convert data string to bytes and reverse for little-endian
+            data_bytes = bytes(data, "utf-8")
+            
+            # Determine flags and command structure based on mode
+            if uid:
+                # Convert UID string to bytes and reverse for little-endian
+                uid_bytes = bytes.fromhex(uid)[::-1]
+
+                cmd = CMD_ISO15693_WRITE_SINGLE_BLOCK_WITH_ADDRESS_FLAG
+                cmd.extend([*uid_bytes])
+            
+            else:
+                if with_select_flag:
+                    cmd = CMD_ISO15693_WRITE_SINGLE_BLOCK_WITH_SELECT_FLAG
+                else:
+                    cmd = CMD_ISO15693_WRITE_SINGLE_BLOCK
+                
+            # common part to be appended to cmd
+            cmd[0] += block_size
+            cmd.extend([block_size, block_number, *data_bytes])
+
+            response = self._send_command(cmd)
+
+            if response[3:5] != STATUS_SUCCESS :
+                print(f"Error in ISO15693_writeSingleBlock: {response[3:5]}")
+                return False
+
+            return True
+
+        except Exception as e:
+            print(f"Error in ISO15693_writeSingleBlock: {str(e)}")
+            return False
         
 
     def close(self) -> None:
