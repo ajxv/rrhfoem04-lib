@@ -76,6 +76,20 @@ class TestRRHFOEM04(unittest.TestCase):
                 print(f"Detected Tag UID: {uid}")
         except Exception as e:
             self.fail(f"Unexpected error: {e}")
+    
+    def test_ISO15693_readSingleBlock(self):
+        """Test ISO14443A inventory scan"""
+        try:
+            block_number = 0
+            # block_data = self.reader.ISO15693_readSingleBlock(block_number, uid="A86E33E8080802E0")
+            # block_data = self.reader.ISO15693_readSingleBlock(block_number, with_select_flag=True)
+            block_data = self.reader.ISO15693_readSingleBlock(block_number)
+            self.assertIsNotNone(block_data, "Error Reading ISO15693 single block data")
+            
+            if block_data:
+                print(f"Data read at block [{block_number}]: {block_data}")
+        except Exception as e:
+            self.fail(f"Unexpected error: {e}")
 
 
 if __name__ == "__main__":
@@ -85,8 +99,8 @@ if __name__ == "__main__":
         "test_ISO15693_singleSlotInventory",
         "test_ISO15693_16SlotInventory",
         "test_ISO14443A_Inventory",
-        "test_ISO15693_ReadSingleBlock",
-        "test_ISO15693_WriteSingleBlock"
+        "test_ISO15693_readSingleBlock",
+        "test_ISO15693_writeSingleBlock"
     ]
     
     if len(sys.argv) > 1:

@@ -200,7 +200,8 @@ class RRHFOEM04:
         except Exception as e:
             print(f"Error in ISO15693 inventory scan: {str(e)}")
             return None
-    
+
+
     def ISO15693_16SlotInventory(self) -> Optional[List]:
         """
         Perform an ISO15693 16 slot inventory scan to detect nearby RFID tags.
@@ -239,6 +240,7 @@ class RRHFOEM04:
             print(f"Error in ISO15693 inventory scan: {str(e)}")
             return None
 
+
     def ISO14443A_Inventory(self) -> Optional[str]:
         try:
             response = self._send_command(CMD_ISO14443A_INVENTORY)
@@ -258,6 +260,61 @@ class RRHFOEM04:
         except Exception as e:
             print(f"Error in ISO14443A inventory scan: {str(e)}")
             return None
+
+
+    def ISO15693_readSingleBlock(self, block_number: int, block_size: int = 4, with_select_flag: bool = False, uid: str = None) -> Optional[str]:
+        """
+        Read a single block from an ISO15693 tag.
+        
+        Args:
+            block_number: The block number to read (0-255)
+            with_select_flag: If True, uses the Select flag for previously selected tags
+            uid: If provided, uses Address flag to target a specific tag by UID
+            
+        Returns:
+            The data read from the block, or None if the read failed
+            
+        Note: According to the protocol, you must either:
+        - Use no flags (reads any tag in field)
+        - Use the Select flag (reads previously selected tag)
+        - Use the Address flag with UID (reads specific tag)
+        """
+        try:
+            # Validate block number
+            if not 0 <= block_number <= 255:
+                raise ValueError("Block number must be between 0 and 255")
+            
+            # Determine flags and command structure based on mode
+            if uid:
+                # Convert UID string to bytes and reverse for little-endian
+                uid_bytes = bytes.fromhex(uid)[::-1]
+
+                cmd = CMD_ISO15693_READ_SINGLE_BLOCK_WITH_ADDRESS_FLAG
+                cmd.extend([*uid_bytes])
+            
+            else:
+                if with_select_flag:
+                    cmd = CMD_ISO15693_READ_SINGLE_BLOCK_WITH_SELECT_FLAG
+                else:
+                    cmd = CMD_ISO15693_READ_SINGLE_BLOCK
+                
+            # common part to be appended at the end
+            cmd.extend([block_size, block_number])
+
+            response = self._send_command(cmd)
+
+            if response[3:5] != STATUS_SUCCESS :
+                print(f"Error in ISO15693_readSingleBlock: {response[3:5]}")
+                return None
+            
+            block_data = response[6: 6 + block_size]
+
+            return ''.join(block_data[::-1])
+
+        except Exception as e:
+            print(f"Error in ISO15693_readSingleBlock: {str(e)}")
+            return None
+        
 
     def close(self) -> None:
         """Close the connection to the device."""
