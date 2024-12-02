@@ -47,7 +47,7 @@ class TestRRHFOEM04(unittest.TestCase):
             uids = self.reader.ISO15693_singleSlotInventory()
             self.assertIsNotNone(uids, "No tags detected")
             if uids:
-                # Print detected UIDs in hex format
+                # Print detected UIDs
                 print(f"No. of tags detected: {len(uids)}")
                 for uid in uids:
                     print(f"Detected Tag UID: {uid}")
@@ -60,10 +60,20 @@ class TestRRHFOEM04(unittest.TestCase):
             uids = self.reader.ISO15693_16SlotInventory()
             self.assertIsNotNone(uids, "No tags detected")
             if uids:
-                # Print detected UIDs in hex format
+                # Print detected UIDs
                 print(f"No. of tags detected: {len(uids)}")
                 for uid in uids:
                     print(f"Detected Tag UID: {uid}")
+        except Exception as e:
+            self.fail(f"Unexpected error: {e}")
+    
+    def test_ISO14443A_Inventory(self):
+        """Test ISO14443A inventory scan"""
+        try:
+            uid = self.reader.ISO14443A_Inventory()
+            self.assertIsNotNone(uid, "No tags detected")
+            if uid:
+                print(f"Detected Tag UID: {uid}")
         except Exception as e:
             self.fail(f"Unexpected error: {e}")
 
@@ -74,6 +84,7 @@ if __name__ == "__main__":
         "test_getReaderInfo",
         "test_ISO15693_singleSlotInventory",
         "test_ISO15693_16SlotInventory",
+        "test_ISO14443A_Inventory",
         "test_ISO15693_ReadSingleBlock",
         "test_ISO15693_WriteSingleBlock"
     ]

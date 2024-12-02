@@ -239,6 +239,25 @@ class RRHFOEM04:
             print(f"Error in ISO15693 inventory scan: {str(e)}")
             return None
 
+    def ISO14443A_Inventory(self) -> Optional[str]:
+        try:
+            response = self._send_command(CMD_ISO14443A_INVENTORY)
+
+            if response[3:5] != STATUS_SUCCESS :
+                print(f"Error getting ISO14443A inventory: {response[3:5]}")
+                return None
+
+            # length of uid detected
+            uid_length = int(response[5])
+
+            # Extract UID
+            start_index = 6
+            uid = ''.join(response[start_index:start_index + uid_length])
+
+            return uid
+        except Exception as e:
+            print(f"Error in ISO14443A inventory scan: {str(e)}")
+            return None
 
     def close(self) -> None:
         """Close the connection to the device."""
