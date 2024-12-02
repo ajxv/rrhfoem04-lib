@@ -78,7 +78,7 @@ class TestRRHFOEM04(unittest.TestCase):
             self.fail(f"Unexpected error: {e}")
     
     def test_ISO15693_readSingleBlock(self):
-        """Test ISO14443A inventory scan"""
+        """Test ISO15693_readSingleBlock"""
         try:
             block_number = 0
             # block_data = self.reader.ISO15693_readSingleBlock(block_number, uid="A86E33E8080802E0")
@@ -92,7 +92,7 @@ class TestRRHFOEM04(unittest.TestCase):
             self.fail(f"Unexpected error: {e}")
     
     def test_ISO15693_writeSingleBlock(self):
-        """Test ISO14443A inventory scan"""
+        """Test ISO15693_writeSingleBlock"""
         try:
             block_number = 0
             data = "ACC1"
@@ -102,6 +102,20 @@ class TestRRHFOEM04(unittest.TestCase):
             self.assertTrue(write_success, "Error Writing ISO15693 single block")
             
             print(f"Successfully written data: [{data}] at block: [{block_number}]")
+        except Exception as e:
+            self.fail(f"Unexpected error: {e}")
+    
+    def test_ISO15693_writeMultipleBlocks(self):
+        """Test ISO15693_writeMultipleBlocks"""
+        try:
+            start_block_number = 0
+            data = "ACC12345"
+            # write_success = self.reader.ISO15693_writeMultipleBlock(start_block_number, data, uid="A86E33E8080802E0")
+            # write_success = self.reader.ISO15693_writeMultipleBlock(start_block_number, data, with_select_flag=True)
+            write_success = self.reader.ISO15693_writeMultipleBlocks(start_block_number, data)
+            self.assertTrue(write_success, "Error Writing ISO15693 Multiple block")
+            
+            print(f"Successfully written data: [{data}] starting from block: [{start_block_number}]")
         except Exception as e:
             self.fail(f"Unexpected error: {e}")
 
@@ -114,7 +128,8 @@ if __name__ == "__main__":
         "test_ISO15693_16SlotInventory",
         "test_ISO14443A_Inventory",
         "test_ISO15693_readSingleBlock",
-        "test_ISO15693_writeSingleBlock"
+        "test_ISO15693_writeSingleBlock",
+        "test_ISO15693_writeMultipleBlocks",
     ]
     
     if len(sys.argv) > 1:
