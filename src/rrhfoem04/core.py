@@ -3,6 +3,7 @@
 import time
 from typing import List, Optional, Dict
 import hid
+import re
 import traceback
 
 from .constants import *
@@ -47,7 +48,7 @@ class RRHFOEM04:
         return (~crc)       # invert crc before returning
 
 
-    def _send_command(self, cmd_data: List[int]) -> Optional[List[int]]:
+    def _send_command(self, cmd_data: List[int]) -> Optional[str]:
         """Send command and receive response with improved timing control."""
         if not self.device:
             raise ConnectionError("Device not connected")
@@ -79,7 +80,8 @@ class RRHFOEM04:
             for _ in range(3):  # Try up to 3 times
                 response = self.device.read(BUFFER_SIZE)
                 if response:
-                    return list(response)
+                    return re.findall('..?', self._byte_list_to_hex_string(response)) # return response as hex string
+                
                 time.sleep(0.01)  # Short delay between retries
 
             return None
@@ -100,7 +102,7 @@ class RRHFOEM04:
             
             # Just in case. Response is almost always empty
             if response and response[3:5] != STATUS_SUCCESS :
-                print(f"Error sounding buzzer: {self._byte_list_to_hex_string(response[3:5])}")
+                print(f"Error sounding buzzer: {response[3:5]}")
                 return False
             
             # Add delay after buzzer command
@@ -130,20 +132,20 @@ class RRHFOEM04:
             
             # Check if the status in the response is successful
             if response[3:5] != STATUS_SUCCESS:
-                print(f"Error getting Reader Information: {self._byte_list_to_hex_string(response[3:5])}")
+                print(f"Error getting Reader Information: {response[3:5]}")
                 return None
-
+            
             # Extract the relevant part of the response containing reader information
             reader_info_part = response[5:21]
-            
+
             # Find the end of the model string (assumed to be marked by '-')
-            model_end = reader_info_part.index(0x2D)  # '-' is represented as 0x2D in ASCII
+            model_end = reader_info_part.index('2D')  # '-' is represented as 0x2D in ASCII
             
             # Convert the model part to a string
-            model = bytearray(reader_info_part[:model_end]).decode()
+            model = bytes.fromhex(''.join(reader_info_part[:model_end])).decode()
             
             # Extract the serial number from the last 3 bytes of the reader info part
-            serial = self._byte_list_to_hex_string(reader_info_part[-3:])
+            serial = ''.join(reader_info_part[-3:])
 
             # Return the extracted model and serial number in a dictionary
             return {
@@ -173,11 +175,11 @@ class RRHFOEM04:
             response = self._send_command(CMD_ISO15693_SINGLE_SLOT_INVENTORY)
 
             if response[3:5] != STATUS_SUCCESS :
-                print(f"Error getting ISO15693 inventory: {self._byte_list_to_hex_string(response[3:5])}")
+                print(f"Error getting ISO15693 inventory: {response[3:5]}")
                 return None
             
             # no of tags detected
-            total_tags = response[5]
+            total_tags = int(response[5])
 
             if total_tags == 0:
                 print("No tags detected")
@@ -190,7 +192,7 @@ class RRHFOEM04:
             for i in range(total_tags):
                 # Extract UID, reverse byte order (little-endian to big-endian)
                 start_index = 6 + (i * 8)
-                uid = bytes(reversed(response[start_index:start_index + 8]))
+                uid = ''.join(response[start_index:start_index + 8][::-1])
                 tag_uids.append(uid)
 
             return tag_uids

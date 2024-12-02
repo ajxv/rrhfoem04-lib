@@ -40,7 +40,7 @@ class TestRRHFOEM04(unittest.TestCase):
                 # Print detected UIDs in hex format
                 print(f"No. of tags detected: {len(uids)}")
                 for uid in uids:
-                    print(f"Detected Tag UID: {uid.hex().upper()}")
+                    print(f"Detected Tag UID: {uid}")
         except Exception as e:
             self.fail(f"Unexpected error: {e}")
 
