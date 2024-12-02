@@ -18,6 +18,16 @@ class TestRRHFOEM04(unittest.TestCase):
             time.sleep(0.1)  # Wait before closing
             self.reader.close()
 
+    def test_buzzer(self):
+        """Test the buzzer"""
+        try:
+            result = self.reader.buzzer()
+            self.assertTrue(result, "Buzzer test failed")
+            if result:
+                print("Buzzer test successful!")
+        except Exception as e:
+            self.fail(f"Unexpected error: {e}")
+
     def test_getReaderInfo(self):
         """Test getting reader information"""
         try:
@@ -31,10 +41,23 @@ class TestRRHFOEM04(unittest.TestCase):
         except Exception as e:
             self.fail(f"Unexpected error: {e}")
 
-    def test_ISO15693_inventory(self):
-        """Test ISO15693 inventory scan"""
+    def test_ISO15693_singleSlotInventory(self):
+        """Test ISO15693 single slot inventory scan"""
         try:
-            uids = self.reader.ISO15693_inventory()
+            uids = self.reader.ISO15693_singleSlotInventory()
+            self.assertIsNotNone(uids, "No tags detected")
+            if uids:
+                # Print detected UIDs in hex format
+                print(f"No. of tags detected: {len(uids)}")
+                for uid in uids:
+                    print(f"Detected Tag UID: {uid}")
+        except Exception as e:
+            self.fail(f"Unexpected error: {e}")
+    
+    def test_ISO15693_16SlotInventory(self):
+        """Test ISO15693 16 slot inventory scan"""
+        try:
+            uids = self.reader.ISO15693_16SlotInventory()
             self.assertIsNotNone(uids, "No tags detected")
             if uids:
                 # Print detected UIDs in hex format
@@ -44,22 +67,13 @@ class TestRRHFOEM04(unittest.TestCase):
         except Exception as e:
             self.fail(f"Unexpected error: {e}")
 
-    def test_buzzer(self):
-        """Test the buzzer"""
-        try:
-            result = self.reader.buzzer()
-            self.assertTrue(result, "Buzzer test failed")
-            if result:
-                print("Buzzer test successful!")
-        except Exception as e:
-            self.fail(f"Unexpected error: {e}")
-
 
 if __name__ == "__main__":
     tests = [
-        "test_getReaderInfo",
-        "test_ISO15693_inventory",
         "test_buzzer",
+        "test_getReaderInfo",
+        "test_ISO15693_singleSlotInventory",
+        "test_ISO15693_16SlotInventory",
         "test_ISO15693_ReadSingleBlock",
         "test_ISO15693_WriteSingleBlock"
     ]

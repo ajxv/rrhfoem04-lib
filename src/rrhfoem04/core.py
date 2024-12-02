@@ -82,7 +82,7 @@ class RRHFOEM04:
                 if response:
                     return re.findall('..?', self._byte_list_to_hex_string(response)) # return response as hex string
                 
-                time.sleep(0.01)  # Short delay between retries
+                time.sleep(0.02)  # Short delay between retries
 
             return None
 
@@ -159,9 +159,9 @@ class RRHFOEM04:
             return None
 
 
-    def ISO15693_inventory(self) -> Optional[List]:
+    def ISO15693_singleSlotInventory(self) -> Optional[List]:
         """
-        Perform an ISO15693 inventory scan to detect nearby RFID tags.
+        Perform an ISO15693 single slot inventory scan to detect nearby RFID tags.
         
         Returns:
         - A list of tag UIDs (unique identifiers) if tags are found
@@ -173,6 +173,44 @@ class RRHFOEM04:
             # 0x10, 0x02 = Command code and flags for single slot inventory
             # 0x26 = Default flag value for inventory without AFI
             response = self._send_command(CMD_ISO15693_SINGLE_SLOT_INVENTORY)
+
+            if response[3:5] != STATUS_SUCCESS :
+                print(f"Error getting ISO15693 inventory: {response[3:5]}")
+                return None
+            
+            # no of tags detected
+            total_tags = int(response[5])
+
+            if total_tags == 0:
+                print("No tags detected")
+                return []
+            
+            # Parse UIDs 
+            # Each UID is 8 bytes long, starting from byte 5, ie. index 6
+            tag_uids = []
+
+            for i in range(total_tags):
+                # Extract UID, reverse byte order (little-endian to big-endian)
+                start_index = 6 + (i * 8)
+                uid = ''.join(response[start_index:start_index + 8][::-1])
+                tag_uids.append(uid)
+
+            return tag_uids
+            
+        except Exception as e:
+            print(f"Error in ISO15693 inventory scan: {str(e)}")
+            return None
+    
+    def ISO15693_16SlotInventory(self) -> Optional[List]:
+        """
+        Perform an ISO15693 16 slot inventory scan to detect nearby RFID tags.
+        
+        Returns:
+        - A list of tag UIDs (unique identifiers) if tags are found
+        - None if no tags are detected or an error occurs
+        """
+        try:
+            response = self._send_command(CMD_ISO15693_16_SLOT_INVENTORY)
 
             if response[3:5] != STATUS_SUCCESS :
                 print(f"Error getting ISO15693 inventory: {response[3:5]}")
