@@ -502,6 +502,109 @@ class RRHFOEM04:
             print(f"Error in ISO15693_readMultipleBlocks: {str(e)}")
             return None
 
+    def ISO14443A_selectCard(self, uid: str, uid_length: int = 4) -> bool:
+        try:
+            # Convert UID from hex strings to bytes
+            uid_bytes = bytes.fromhex(uid)
+
+            cmd = CMD_ISO14443A_SELECT_CARD
+            cmd.extend([uid_length, *uid_bytes])
+            response = self._send_command(cmd)
+
+            if not response:
+                print("No response received")
+                return False
+                
+            # Check status bytes
+            if response[3:5] != STATUS_SUCCESS:
+                print(f"ISO14443A_selectCard failed: {response[3:5]}")
+                return False
+
+            return True
+    
+        except Exception as e:
+            print(f"Error in ISO14443A_selectCard: {str(e)}")
+            return False
+
+    def ISO14443A_mifareAuthenticate(self, uid: str, block_number: int, key_type: str = 'A', key: str = "FFFFFFFFFFFF") -> bool:
+        """
+        Authenticate a Mifare card block using either key A or key B.
+        
+        Args:
+            block_number: Block number to authenticate (0-255)
+            uid: Card UID in hex string format
+            key_type: 'A' for key A, 'B' for key B
+            key: Authentication key in hex string format (12 characters/6 bytes)
+            
+        Returns:
+            bool: True if authentication successful, False otherwise
+        """
+        try:
+            # Validate block number
+            if not 0 <= block_number <= 255:
+                raise ValueError("Block number must be between 0 and 255")
+                
+            # Validate key_type
+            if key_type not in ['A', 'B']:
+                raise ValueError("key_type must be 'A' or 'B'")
+                
+            # Validate key length
+            if len(key) != 12:  # 6 bytes = 12 hex characters
+                raise ValueError("Key must be 6 bytes (12 hex characters)")
+            
+
+            # Convert key type to command byte
+            key_type_byte = 0x60 if key_type == 'A' else 0x61
+                
+            # Convert UID and key from hex strings to bytes
+            uid_bytes = bytes.fromhex(uid)
+            key_bytes = bytes.fromhex(key)
+
+            # Build command according to protocol
+            cmd = CMD_ISO14443A_MIFARE_AUTHENTICATE
+            cmd.extend([*uid_bytes, block_number, key_type_byte, *key_bytes])
+            
+            # Send command
+            response = self._send_command(cmd)
+            
+            if not response:
+                print("No response received")
+                return False
+                
+            # Check status bytes
+            if response[3:5] != STATUS_SUCCESS:
+                print(f"ISO14443A mifare Authentication failed: {response[3:5]}")
+                return False
+                
+            return True
+            
+        except Exception as e:
+            print(f"Error in ISO14443A mifare authenticate: {str(e)}")
+            return False
+        
+    def ISO14443A_mifareRead(self, block_number: int = 0) -> Optional[str]:
+        try:
+            # Validate block number
+            if not 0 <= block_number <= 255:
+                raise ValueError("Block number must be between 0 and 255")
+            
+            cmd = CMD_ISO14443A_MIFARE_READ
+            cmd.append(block_number)
+
+            response = self._send_command(cmd)
+
+            if response[3:5] != STATUS_SUCCESS :
+                print(f"Error in ISO14443A_mifareRead: {response[3:5]}")
+                return None
+
+            # block data read
+            block_data = response[5: 5 + 16]
+
+            return ''.join(block_data)
+        
+        except Exception as e:
+            print(f"Error in ISO14443A_mifareRead: {str(e)}")
+            return None
         
     def close(self) -> None:
         """Close the connection to the device."""

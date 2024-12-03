@@ -135,6 +135,35 @@ class TestRRHFOEM04(unittest.TestCase):
         except Exception as e:
             self.fail(f"Unexpected error: {e}")
 
+    def test_ISO14443A_mifareAuthenticate(self):
+        """Test ISO14443A_mifareAuthenticate"""
+        try:
+            block_number = 4
+            uid="239B75BC"
+            select_result = self.reader.ISO14443A_selectCard(uid)
+            authenticate_result = self.reader.ISO14443A_mifareAuthenticate(uid, block_number=block_number)
+            self.assertTrue(select_result and authenticate_result, "ISO14443A_mifareAuthenticate test failed")
+            if authenticate_result:
+                print("ISO14443A_mifareAuthenticate test successful!")
+        except Exception as e:
+            self.fail(f"Unexpected error: {e}")
+
+    def test_ISO14443A_mifareRead(self):
+        """Test ISO14443A mifare read"""
+        try:
+            block_number = 4
+            uid="239B75BC"
+            select_result = self.reader.ISO14443A_selectCard(uid)
+            authenticate_result = self.reader.ISO14443A_mifareAuthenticate(uid, block_number=block_number)
+            self.assertTrue(select_result and authenticate_result, "ISO14443A_mifareAuthenticate test failed")
+
+            block_data = self.reader.ISO14443A_mifareRead(block_number=block_number)
+            self.assertIsNotNone(block_data, "No data read")
+            if block_data:
+                print(f"Read block [{block_number}] data: {block_data}")
+        except Exception as e:
+            self.fail(f"Unexpected error: {e}")
+
 if __name__ == "__main__":
     tests = [
         "test_buzzer",
@@ -146,6 +175,8 @@ if __name__ == "__main__":
         "test_ISO15693_writeSingleBlock",
         "test_ISO15693_writeMultipleBlocks",
         "test_ISO15693_readMultipleBlocks",
+        "test_ISO14443A_mifareAuthenticate",
+        "test_ISO14443A_mifareRead",
     ]
     
     if len(sys.argv) > 1:
