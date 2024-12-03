@@ -373,7 +373,7 @@ class RRHFOEM04:
             return False
 
 
-    def ISO15693_writeMultipleBlocks(self, start_block_number: int, data: str, delimiter: str = "#", block_size: int = 4, with_select_flag: bool = False, uid: str = None) -> bool:
+    def ISO15693_writeMultipleBlocks(self, start_block_number: int, data: str, delimiter: str = "", block_size: int = 4, with_select_flag: bool = False, uid: str = None) -> bool:
         """
         Write to multiple blocks of an ISO15693 tag.
         
@@ -408,8 +408,6 @@ class RRHFOEM04:
             # Pad the last chunk if it's less than the block size
             if data_chunks_per_block and len(data_chunks_per_block[-1]) < block_size:
                 data_chunks_per_block[-1] = data_chunks_per_block[-1].ljust(block_size, b'\x00')
-
-            print(data_chunks_per_block)
 
             # Determine flags and command structure based on mode
             if uid:
@@ -449,6 +447,62 @@ class RRHFOEM04:
             return False
 
 
+    def ISO15693_readMultipleBlock(self, start_block_number: int, total_blocks: int = 5, block_size: int = 4, with_select_flag: bool = False, uid: str = None) -> Optional[str]:
+        """
+        Read multiple blocks from an ISO15693 tag.
+        
+        Args:
+            block_number: The block number to read (0-255)
+            total_blocks: The number of simultaneous blocks to read
+            with_select_flag: If True, uses the Select flag for previously selected tags
+            uid: If provided, uses Address flag to target a specific tag by UID
+            
+        Returns:
+            The data read from the blocks, or None if the read failed
+            
+        Note: According to the protocol, you must either:
+        - Use no flags (reads any tag in field)
+        - Use the Select flag (reads previously selected tag)
+        - Use the Address flag with UID (reads specific tag)
+        """
+        try:
+            # Validate block number
+            if not 0 <= start_block_number <= 255:
+                raise ValueError("Block number must be between 0 and 255")
+            
+            # Determine flags and command structure based on mode
+            if uid:
+                # Convert UID string to bytes and reverse for little-endian
+                uid_bytes = bytes.fromhex(uid)[::-1]
+
+                cmd = CMD_ISO15693_READ_MULTIPLE_BLOCK_WITH_ADDRESS_FLAG
+                cmd.extend([*uid_bytes])
+            
+            else:
+                if with_select_flag:
+                    cmd = CMD_ISO15693_READ_MULTIPLE_BLOCK_WITH_SELECT_FLAG
+                else:
+                    cmd = CMD_ISO15693_READ_MULTIPLE_BLOCK
+                
+            # common part to be appended to cmd
+            cmd.extend([block_size, start_block_number, total_blocks])
+
+            response = self._send_command(cmd)
+
+            if response[3:5] != STATUS_SUCCESS :
+                print(f"Error in ISO15693_readMultipleBlock: {response[3:5]}")
+                return None
+            
+            block_data_read = response[6: 6 + (block_size * (total_blocks + 1))]
+            data_blocks = [''.join(block_data_read[i: i + block_size][::-1]) for i in range(0, len(block_data_read), block_size)]
+
+            return ''.join(data_blocks)
+
+        except Exception as e:
+            print(f"Error in ISO15693_readMultipleBlock: {str(e)}")
+            return None
+
+        
     def close(self) -> None:
         """Close the connection to the device."""
         if self.device:

@@ -112,13 +112,28 @@ class TestRRHFOEM04(unittest.TestCase):
             data = "ACC12345"
             # write_success = self.reader.ISO15693_writeMultipleBlock(start_block_number, data, uid="A86E33E8080802E0")
             # write_success = self.reader.ISO15693_writeMultipleBlock(start_block_number, data, with_select_flag=True)
-            write_success = self.reader.ISO15693_writeMultipleBlocks(start_block_number, data)
+            write_success = self.reader.ISO15693_writeMultipleBlocks(start_block_number, data, delimiter='#')
             self.assertTrue(write_success, "Error Writing ISO15693 Multiple block")
             
             print(f"Successfully written data: [{data}] starting from block: [{start_block_number}]")
         except Exception as e:
             self.fail(f"Unexpected error: {e}")
 
+    def test_ISO15693_readMultipleBlock(self):
+        """Test ISO15693_readMultipleBlock"""
+        try:
+            block_number = 0
+            total_blocks = 2
+
+            # block_data = self.reader.ISO15693_readMultipleBlock(block_number,total_blocks=total_blocks, uid="A86E33E8080802E0")
+            # block_data = self.reader.ISO15693_readMultipleBlock(block_number,total_blocks=total_blocks, with_select_flag=True)
+            block_data = self.reader.ISO15693_readMultipleBlock(block_number, total_blocks=total_blocks)
+            self.assertIsNotNone(block_data, "Error Reading ISO15693 Multiple block data")
+            
+            if block_data:
+                print(f"Data read at block [{block_number}]: {block_data}")
+        except Exception as e:
+            self.fail(f"Unexpected error: {e}")
 
 if __name__ == "__main__":
     tests = [
@@ -130,6 +145,7 @@ if __name__ == "__main__":
         "test_ISO15693_readSingleBlock",
         "test_ISO15693_writeSingleBlock",
         "test_ISO15693_writeMultipleBlocks",
+        "test_ISO15693_readMultipleBlock",
     ]
     
     if len(sys.argv) > 1:
