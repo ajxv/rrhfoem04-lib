@@ -560,6 +560,9 @@ class RRHFOEM04:
             uid_bytes = bytes.fromhex(uid)
             key_bytes = bytes.fromhex(key)
 
+            # select card before authenticate
+            self.ISO14443A_selectCard(uid)
+
             # Build command according to protocol
             cmd = CMD_ISO14443A_MIFARE_AUTHENTICATE
             cmd.extend([*uid_bytes, block_number, key_type_byte, *key_bytes])
@@ -582,11 +585,14 @@ class RRHFOEM04:
             print(f"Error in ISO14443A mifare authenticate: {str(e)}")
             return False
         
-    def ISO14443A_mifareRead(self, block_number: int = 0) -> Optional[str]:
+    def ISO14443A_mifareRead(self, uid: str, block_number: int = 0) -> Optional[str]:
         try:
             # Validate block number
             if not 0 <= block_number <= 255:
                 raise ValueError("Block number must be between 0 and 255")
+            
+            # authenticate block before read
+            self.ISO14443A_mifareAuthenticate(uid=uid, block_number=block_number)
             
             cmd = CMD_ISO14443A_MIFARE_READ
             cmd.append(block_number)

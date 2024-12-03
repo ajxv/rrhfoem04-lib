@@ -140,9 +140,8 @@ class TestRRHFOEM04(unittest.TestCase):
         try:
             block_number = 4
             uid="239B75BC"
-            select_result = self.reader.ISO14443A_selectCard(uid)
             authenticate_result = self.reader.ISO14443A_mifareAuthenticate(uid, block_number=block_number)
-            self.assertTrue(select_result and authenticate_result, "ISO14443A_mifareAuthenticate test failed")
+            self.assertTrue(authenticate_result, "ISO14443A_mifareAuthenticate test failed")
             if authenticate_result:
                 print("ISO14443A_mifareAuthenticate test successful!")
         except Exception as e:
@@ -153,11 +152,10 @@ class TestRRHFOEM04(unittest.TestCase):
         try:
             block_number = 4
             uid="239B75BC"
-            select_result = self.reader.ISO14443A_selectCard(uid)
-            authenticate_result = self.reader.ISO14443A_mifareAuthenticate(uid, block_number=block_number)
-            self.assertTrue(select_result and authenticate_result, "ISO14443A_mifareAuthenticate test failed")
+            # authenticate_result = self.reader.ISO14443A_mifareAuthenticate(uid, block_number=block_number)
+            # self.assertTrue(authenticate_result, "ISO14443A_mifareAuthenticate test failed")
 
-            block_data = self.reader.ISO14443A_mifareRead(block_number=block_number)
+            block_data = self.reader.ISO14443A_mifareRead(uid=uid, block_number=block_number)
             self.assertIsNotNone(block_data, "No data read")
             if block_data:
                 print(f"Read block [{block_number}] data: {block_data}")
