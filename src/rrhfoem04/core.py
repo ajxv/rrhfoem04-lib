@@ -447,7 +447,7 @@ class RRHFOEM04:
             return False
 
 
-    def ISO15693_readMultipleBlock(self, start_block_number: int, total_blocks: int = 5, block_size: int = 4, with_select_flag: bool = False, uid: str = None) -> Optional[str]:
+    def ISO15693_readMultipleBlocks(self, start_block_number: int, total_blocks: int = 5, block_size: int = 4, with_select_flag: bool = False, uid: str = None) -> Optional[str]:
         """
         Read multiple blocks from an ISO15693 tag.
         
@@ -475,14 +475,14 @@ class RRHFOEM04:
                 # Convert UID string to bytes and reverse for little-endian
                 uid_bytes = bytes.fromhex(uid)[::-1]
 
-                cmd = CMD_ISO15693_READ_MULTIPLE_BLOCK_WITH_ADDRESS_FLAG
+                cmd = CMD_ISO15693_READ_MULTIPLE_BLOCKS_WITH_ADDRESS_FLAG
                 cmd.extend([*uid_bytes])
             
             else:
                 if with_select_flag:
-                    cmd = CMD_ISO15693_READ_MULTIPLE_BLOCK_WITH_SELECT_FLAG
+                    cmd = CMD_ISO15693_READ_MULTIPLE_BLOCKS_WITH_SELECT_FLAG
                 else:
-                    cmd = CMD_ISO15693_READ_MULTIPLE_BLOCK
+                    cmd = CMD_ISO15693_READ_MULTIPLE_BLOCKS
                 
             # common part to be appended to cmd
             cmd.extend([block_size, start_block_number, total_blocks])
@@ -490,7 +490,7 @@ class RRHFOEM04:
             response = self._send_command(cmd)
 
             if response[3:5] != STATUS_SUCCESS :
-                print(f"Error in ISO15693_readMultipleBlock: {response[3:5]}")
+                print(f"Error in ISO15693_readMultipleBlocks: {response[3:5]}")
                 return None
             
             block_data_read = response[6: 6 + (block_size * (total_blocks + 1))]
@@ -499,7 +499,7 @@ class RRHFOEM04:
             return ''.join(data_blocks)
 
         except Exception as e:
-            print(f"Error in ISO15693_readMultipleBlock: {str(e)}")
+            print(f"Error in ISO15693_readMultipleBlocks: {str(e)}")
             return None
 
         

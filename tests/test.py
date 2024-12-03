@@ -119,15 +119,15 @@ class TestRRHFOEM04(unittest.TestCase):
         except Exception as e:
             self.fail(f"Unexpected error: {e}")
 
-    def test_ISO15693_readMultipleBlock(self):
-        """Test ISO15693_readMultipleBlock"""
+    def test_ISO15693_readMultipleBlocks(self):
+        """Test ISO15693_readMultipleBlocks"""
         try:
             block_number = 0
             total_blocks = 2
 
-            # block_data = self.reader.ISO15693_readMultipleBlock(block_number,total_blocks=total_blocks, uid="A86E33E8080802E0")
-            # block_data = self.reader.ISO15693_readMultipleBlock(block_number,total_blocks=total_blocks, with_select_flag=True)
-            block_data = self.reader.ISO15693_readMultipleBlock(block_number, total_blocks=total_blocks)
+            # block_data = self.reader.ISO15693_readMultipleBlocks(block_number,total_blocks=total_blocks, uid="A86E33E8080802E0")
+            # block_data = self.reader.ISO15693_readMultipleBlocks(block_number,total_blocks=total_blocks, with_select_flag=True)
+            block_data = self.reader.ISO15693_readMultipleBlocks(block_number, total_blocks=total_blocks)
             self.assertIsNotNone(block_data, "Error Reading ISO15693 Multiple block data")
             
             if block_data:
@@ -145,7 +145,7 @@ if __name__ == "__main__":
         "test_ISO15693_readSingleBlock",
         "test_ISO15693_writeSingleBlock",
         "test_ISO15693_writeMultipleBlocks",
-        "test_ISO15693_readMultipleBlock",
+        "test_ISO15693_readMultipleBlocks",
     ]
     
     if len(sys.argv) > 1:
