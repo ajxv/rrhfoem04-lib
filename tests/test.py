@@ -18,13 +18,33 @@ class TestRRHFOEM04(unittest.TestCase):
             time.sleep(0.1)  # Wait before closing
             self.reader.close()
 
-    def test_buzzer(self):
+    def test_buzzer_beep(self):
         """Test the buzzer"""
         try:
-            result = self.reader.buzzer()
+            result = self.reader.buzzer_beep()
             self.assertTrue(result, "Buzzer test failed")
             if result:
                 print("Buzzer test successful!")
+        except Exception as e:
+            self.fail(f"Unexpected error: {e}")
+    
+    def test_buzzer_on(self):
+        """Test buzzer on"""
+        try:
+            result = self.reader.buzzer_on()
+            self.assertTrue(result, "Buzzer on test failed")
+            if result:
+                print("Buzzer on test successful!")
+        except Exception as e:
+            self.fail(f"Unexpected error: {e}")
+    
+    def test_buzzer_off(self):
+        """Test buzzer off"""
+        try:
+            result = self.reader.buzzer_off()
+            self.assertTrue(result, "Buzzer off test failed")
+            if result:
+                print("Buzzer off test successful!")
         except Exception as e:
             self.fail(f"Unexpected error: {e}")
 
@@ -189,7 +209,9 @@ class TestRRHFOEM04(unittest.TestCase):
 
 if __name__ == "__main__":
     tests = [
-        "test_buzzer",
+        "test_buzzer_beep",
+        "test_buzzer_on",
+        "test_buzzer_off",
         "test_getReaderInfo",
         "test_ISO15693_singleSlotInventory",
         "test_ISO15693_16SlotInventory",

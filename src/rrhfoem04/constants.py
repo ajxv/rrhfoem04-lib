@@ -26,8 +26,10 @@ DEFAULT_TIMEOUT = 0.5  # Default timeout for commands in seconds
 # - Flags: Additional command parameters
 
 # System Commands (Category 0xF0)
-CMD_GET_READER_INFO = [0x03, 0xF0, 0x00]  # Get reader model and serial number
-CMD_BUZZER = [0x03, 0xF0, 0x01]           # Activate reader's buzzer
+CMD_GET_READER_INFO = [0x03, 0xF0, 0x00]    # Get reader model and serial number
+CMD_BUZZER_BEEP = [0x03, 0xF0, 0x01]        # Activate reader's buzzer
+CMD_BUZZER_ON = [0x03, 0xF0, 0x16]          # Turn on reader's buzzer
+CMD_BUZZER_OFF = [0x03, 0xF0, 0x15]         # Turn off reader's buzzer
 
 # ISO15693 Commands (Category 0x10)
 # Inventory Commands - Used to detect tags in the field
@@ -70,10 +72,10 @@ CMD_ISO14443A_MIFARE_WRITE = [0x14, 0x21, 0x03]         # Write block (after aut
 STATUS_SUCCESS = ['00', '00']  # Command executed successfully
 
 # Additional timing constants for reliable communication
-COMMAND_INTERVAL = 0.1    # Minimum time between commands (seconds)
-RETRY_DELAY = 0.02       # Delay between retry attempts (seconds)
-MAX_RETRIES = 3          # Maximum number of retry attempts
+COMMAND_INTERVAL = 0.1  # Minimum time between commands (seconds)
+RETRY_DELAY = 0.02      # Delay between retry attempts (seconds)
+MAX_RETRIES = 3         # Maximum number of retry attempts
 
 # Block size constants
-DEFAULT_BLOCK_SIZE = 4    # Standard block size for ISO15693 tags
-MIFARE_BLOCK_SIZE = 16   # Block size for Mifare Classic cards
+DEFAULT_BLOCK_SIZE = 4  # Standard block size for ISO15693 tags
+MIFARE_BLOCK_SIZE = 16  # Block size for Mifare Classic cards

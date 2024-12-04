@@ -176,7 +176,7 @@ class RRHFOEM04:
         """
         return ''.join(f"{x:02X}" for x in data)
 
-    def buzzer(self) -> bool:
+    def buzzer_beep(self) -> bool:
         """
         Activate the reader's buzzer with proper timing control.
         
@@ -191,7 +191,7 @@ class RRHFOEM04:
             # Pre-buzzer delay prevents interference with previous operations
             time.sleep(COMMAND_INTERVAL)
         
-            response = self._send_command(CMD_BUZZER)
+            response = self._send_command(CMD_BUZZER_BEEP)
             
             # Empty response is normal for buzzer command, but check status if present
             if response and response[3:5] != STATUS_SUCCESS:
@@ -205,7 +205,57 @@ class RRHFOEM04:
         except Exception as e:
             print(f"Error in buzzer activation: {str(e)}")
             return False
+    
+    def buzzer_on(self) -> bool:
+        """
+        Activate the reader's buzzer.
 
+        The buzzer provides audible feedback for successful operations.
+
+        Returns:
+            bool: True if buzzer activation is successful, False otherwise.
+        """
+
+        try:
+        
+            response = self._send_command(CMD_BUZZER_ON)
+            
+            # Empty response is normal for buzzer command, but check status if present
+            if response and response[3:5] != STATUS_SUCCESS:
+                print(f"Error activating buzzer: {response[3:5]}")
+                return False
+
+            return True
+        
+        except Exception as e:
+            print(f"Error in buzzer activation: {str(e)}")
+            return False
+
+    def buzzer_off(self) -> bool:
+        """
+        Deactivate the reader's buzzer.
+
+        The buzzer provides audible feedback for successful operations.
+
+        Returns:
+            bool: True if buzzer deactivation is successful, False otherwise.
+        """
+
+        try:
+        
+            response = self._send_command(CMD_BUZZER_OFF)
+            
+            # Empty response is normal for buzzer command, but check status if present
+            if response and response[3:5] != STATUS_SUCCESS:
+                print(f"Error deactivating buzzer: {response[3:5]}")
+                return False
+
+            return True
+        
+        except Exception as e:
+            print(f"Error in buzzer deactivation: {str(e)}")
+            return False
+        
     def getReaderInfo(self) -> Optional[Dict]:
         """
         Retrieve device information from the RFID reader.
