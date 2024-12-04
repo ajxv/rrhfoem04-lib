@@ -95,7 +95,7 @@ class TestRRHFOEM04(unittest.TestCase):
         """Test ISO15693_writeSingleBlock"""
         try:
             block_number = 0
-            data = "ACC1"
+            data = "ACC"
             # write_success = self.reader.ISO15693_writeSingleBlock(block_number, data, uid="A86E33E8080802E0")
             # write_success = self.reader.ISO15693_writeSingleBlock(block_number, data, with_select_flag=True)
             write_success = self.reader.ISO15693_writeSingleBlock(block_number, data)
@@ -112,7 +112,7 @@ class TestRRHFOEM04(unittest.TestCase):
             data = "ACC12345"
             # write_success = self.reader.ISO15693_writeMultipleBlock(start_block_number, data, uid="A86E33E8080802E0")
             # write_success = self.reader.ISO15693_writeMultipleBlock(start_block_number, data, with_select_flag=True)
-            write_success = self.reader.ISO15693_writeMultipleBlocks(start_block_number, data, delimiter='#')
+            write_success = self.reader.ISO15693_writeMultipleBlocks(start_block_number, data)
             self.assertTrue(write_success, "Error Writing ISO15693 Multiple block")
             
             print(f"Successfully written data: [{data}] starting from block: [{start_block_number}]")
@@ -151,14 +151,26 @@ class TestRRHFOEM04(unittest.TestCase):
         """Test ISO14443A mifare read"""
         try:
             block_number = 4
-            uid="239B75BC"
-            # authenticate_result = self.reader.ISO14443A_mifareAuthenticate(uid, block_number=block_number)
-            # self.assertTrue(authenticate_result, "ISO14443A_mifareAuthenticate test failed")
+            uid="83DBDA2F"
 
             block_data = self.reader.ISO14443A_mifareRead(uid=uid, block_number=block_number)
             self.assertIsNotNone(block_data, "No data read")
             if block_data:
                 print(f"Read block [{block_number}] data: {block_data}")
+        except Exception as e:
+            self.fail(f"Unexpected error: {e}")
+    
+    def test_ISO14443A_mifareWrite(self):
+        """Test ISO14443A mifare read"""
+        try:
+            block_number = 4
+            uid="83DBDA2F"
+            data = "KJ000F00#"
+
+            write_response = self.reader.ISO14443A_mifareWrite(uid=uid, data=data, block_number=block_number)
+            self.assertTrue(write_response, "Failed to write data")
+
+            print(f"Successfully written data: [{data}] to block: [{block_number}]")
         except Exception as e:
             self.fail(f"Unexpected error: {e}")
 
@@ -175,6 +187,7 @@ if __name__ == "__main__":
         "test_ISO14443A_Inventory",
         "test_ISO14443A_mifareAuthenticate",
         "test_ISO14443A_mifareRead",
+        "test_ISO14443A_mifareWrite",
     ]
     
     if len(sys.argv) > 1:

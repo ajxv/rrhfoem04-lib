@@ -432,6 +432,10 @@ class RRHFOEM04:
             
             # Convert input data to bytes for transmission
             data_bytes = bytes(data, "utf-8")
+
+            # Pad data bytes if necessary
+            if data_bytes and len(data_bytes) < block_size:
+                data_bytes = data_bytes.ljust(block_size, b'\x00')
             
             # Select appropriate command based on addressing mode
             if uid:
@@ -542,8 +546,7 @@ class RRHFOEM04:
             print(f"Error in multiple block read: {str(e)}")
             return None
         
-    def ISO15693_writeMultipleBlocks(self, start_block_number: int, data: str, 
-                                    delimiter: str = "", block_size: int = 4,
+    def ISO15693_writeMultipleBlocks(self, start_block_number: int, data: str, block_size: int = 4,
                                     with_select_flag: bool = False, uid: str = None) -> bool:
         """
         Write data across multiple blocks of an ISO15693 tag.
@@ -563,7 +566,6 @@ class RRHFOEM04:
         Args:
             start_block_number: First block to write to (0-255)
             data: Complete data string to write
-            delimiter: Optional delimiter to append to data
             block_size: Size of each memory block
             with_select_flag: Use select flag mode
             uid: Target specific tag by UID
@@ -575,8 +577,8 @@ class RRHFOEM04:
             if not 0 <= start_block_number <= 255:
                 raise ValueError("Start block number must be between 0 and 255")
 
-            # Prepare data by adding delimiter and converting to bytes
-            data_bytes = bytes(data + delimiter, "utf-8")
+            # Prepare data by converting to bytes
+            data_bytes = bytes(data, "utf-8")
             
             # Split data into block-sized chunks
             data_chunks = [data_bytes[i:i + block_size] 
@@ -829,6 +831,68 @@ class RRHFOEM04:
         except Exception as e:
             print(f"Error reading Mifare block: {str(e)}")
             return None
+    
+    def ISO14443A_mifareWrite(self, uid: str, data: str, block_number: int = 1) -> bool:
+        """
+        Write data to a specific block on an authenticated Mifare Classic card.
+        
+        Mifare Classic cards organize memory in 16-byte blocks grouped into sectors.
+        Each sector is protected by two keys (A and B). Writing requires:
+        1. Prior authentication with an appropriate key
+        2. Proper access rights for the block
+        3. Active connection maintained since authentication
+        
+        Args:
+            uid: Card's unique identifier.
+            data: Data to write to the block, provided as a 16-byte string (32 hex characters).
+            block_number: Memory block to write (0-255). Defaults to 1 since block 0 is typically reserved 
+                        for manufacturer data.
+        
+        Returns:
+            str: Confirmation or status message in string format.
+            None: If the write operation fails.
+        """
+
+        try:
+            if not 0 <= block_number <= 255:
+                raise ValueError("Block number must be between 0 and 255")
+
+            # Convert input data to bytes for transmission
+            data_bytes = bytes(data, "utf-8")
+
+            # Pad data bytes if necessary
+            if data_bytes and len(data_bytes) < MIFARE_BLOCK_SIZE:
+                data_bytes = data_bytes.ljust(MIFARE_BLOCK_SIZE, b'\x00')
+
+            # Authenticate block before reading
+            # Check if this block is already authenticated
+            print(uid == self._mifare_selected_uid)
+            if uid not in self._mifare_auth_blocks or block_number not in self._mifare_auth_blocks[uid]:
+                if not self.ISO14443A_mifareAuthenticate(uid=uid, block_number=block_number):
+                    # Clear state on authentication failure
+                    print("Authentication failed before write")
+                    self._mifare_selected_uid = None
+                    self._mifare_auth_blocks.clear()
+                    return None
+
+                # Cache successful authentication
+                if uid not in self._mifare_auth_blocks:
+                    self._mifare_auth_blocks[uid] = set()
+                self._mifare_auth_blocks[uid].add(block_number)
+
+            # Prepare and send write command
+            cmd = CMD_ISO14443A_MIFARE_WRITE.copy()
+            cmd.extend([block_number, *data_bytes])
+
+            response = self._send_command(cmd)
+            if response[3:5] != STATUS_SUCCESS:
+                raise CommandError(f"Write operation failed with status: {response[3:5]}")
+
+            return True
+
+        except Exception as e:
+            print(f"Error writing Mifare block: {str(e)}")
+            return False
         
     def close(self) -> None:
         """

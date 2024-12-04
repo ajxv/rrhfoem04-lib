@@ -57,25 +57,12 @@ CMD_ISO14443A_SELECT_CARD = [0x08, 0x2F, 0x02]   # Select specific card for oper
 
 # Mifare Classic Commands (Category 0x21)
 CMD_ISO14443A_MIFARE_AUTHENTICATE = [0x0F, 0x21, 0x01]  # Authenticate with key A or B
-CMD_ISO14443A_MIFARE_READ = [0x04, 0x21, 0x02]         # Read 16-byte block after auth
+CMD_ISO14443A_MIFARE_READ = [0x04, 0x21, 0x02]          # Read 16-byte block (after auth)
+CMD_ISO14443A_MIFARE_WRITE = [0x14, 0x21, 0x03]         # Write block (after auth)
 
 # Response Status Codes
 # The reader returns these codes to indicate command execution status
 STATUS_SUCCESS = ['00', '00']  # Command executed successfully
-
-# Flag Bit Definitions for ISO15693
-ISO15693_FLAGS = {
-    'SUBCARRIER_SINGLE': 0x00,    # Use single subcarrier
-    'SUBCARRIER_DUAL': 0x01,      # Use dual subcarrier
-    'DATARATE_LOW': 0x00,         # Use low data rate
-    'DATARATE_HIGH': 0x02,        # Use high data rate
-    'INVENTORY_FLAG': 0x04,       # Perform inventory operation
-    'PROTOCOL_EXT': 0x08,         # Use protocol extension
-    'SELECT_FLAG': 0x10,          # Select specific tag
-    'ADDRESS_FLAG': 0x20,         # Use addressed mode
-    'OPTION_FLAG': 0x40,          # Enable optional features
-    'AFI_FLAG': 0x80              # Use Application Family Identifier
-}
 
 # Additional timing constants for reliable communication
 COMMAND_INTERVAL = 0.1    # Minimum time between commands (seconds)
