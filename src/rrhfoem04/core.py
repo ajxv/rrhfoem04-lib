@@ -44,6 +44,10 @@ class RRHFOEM04:
         """
         self.device: Optional[hid.device] = None
         self._last_command_time = 0  # Tracks timing between commands
+        # Add tracking for Mifare card state
+        self._mifare_selected_uid = None
+        self._mifare_auth_blocks = {}  # Track authenticated sectors by UID
+
         if auto_connect:
             self.connect()
 
@@ -744,8 +748,13 @@ class RRHFOEM04:
                 raise ValidationError("Invalid UID or key format (must be hex string)")
 
             # Select card before authentication
-            if not self.ISO14443A_selectCard(uid):
-                raise TagError("Card not present or cannot be selected")
+            # Check if we need to select the card
+            if self._mifare_selected_uid != uid:
+                if not self.ISO14443A_selectCard(uid):
+                    raise TagError("Card not present or cannot be selected")
+                # Update selected card and clear previous authentication cache
+                self._mifare_selected_uid = uid
+                self._mifare_auth_blocks.clear()
 
             # Build authentication command:
             # [Command][UID][Block][KeyType][Key]
@@ -790,10 +799,19 @@ class RRHFOEM04:
                 raise ValueError("Block number must be between 0 and 255")
             
             # Authenticate block before reading
-            # Note: Uses default key A, might need modification for secured cards
-            if not self.ISO14443A_mifareAuthenticate(uid=uid, block_number=block_number):
-                print("Authentication failed before read")
-                return None
+            # Check if this block is already authenticated
+            if uid not in self._mifare_auth_blocks or block_number not in self._mifare_auth_blocks[uid]:
+                if not self.ISO14443A_mifareAuthenticate(uid=uid, block_number=block_number):
+                    # Clear state on authentication failure
+                    print("Authentication failed before read")
+                    self._mifare_selected_uid = None
+                    self._mifare_auth_blocks.clear()
+                    return None
+                
+                # Cache successful authentication
+                if uid not in self._mifare_auth_blocks:
+                    self._mifare_auth_blocks[uid] = set()
+                self._mifare_auth_blocks[uid].add(block_number)
             
             # Prepare and send read command
             cmd = CMD_ISO14443A_MIFARE_READ.copy()
