@@ -168,11 +168,11 @@ if __name__ == "__main__":
         "test_getReaderInfo",
         "test_ISO15693_singleSlotInventory",
         "test_ISO15693_16SlotInventory",
-        "test_ISO14443A_Inventory",
         "test_ISO15693_readSingleBlock",
         "test_ISO15693_writeSingleBlock",
         "test_ISO15693_writeMultipleBlocks",
         "test_ISO15693_readMultipleBlocks",
+        "test_ISO14443A_Inventory",
         "test_ISO14443A_mifareAuthenticate",
         "test_ISO14443A_mifareRead",
     ]
