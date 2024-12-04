@@ -174,6 +174,19 @@ class TestRRHFOEM04(unittest.TestCase):
         except Exception as e:
             self.fail(f"Unexpected error: {e}")
 
+    def test_ISO15693_writeAFI(self):
+        """Test ISO15693_writeAFI"""
+        try:
+            afi = 7
+            # write_success = self.reader.ISO15693_writeAFI(afi=afi, uid="A86E33E8080802E0")
+            # write_success = self.reader.ISO15693_writeAFI(afi=afi, with_select_flag=True)
+            write_success = self.reader.ISO15693_writeAFI(afi=afi)
+            self.assertTrue(write_success, "Error Writing ISO15693 AFI Flag")
+            
+            print(f"Successfully written afi flag: [{afi}]")
+        except Exception as e:
+            self.fail(f"Unexpected error: {e}")
+
 if __name__ == "__main__":
     tests = [
         "test_buzzer",
@@ -184,6 +197,7 @@ if __name__ == "__main__":
         "test_ISO15693_writeSingleBlock",
         "test_ISO15693_writeMultipleBlocks",
         "test_ISO15693_readMultipleBlocks",
+        "test_ISO15693_writeAFI",
         "test_ISO14443A_Inventory",
         "test_ISO14443A_mifareAuthenticate",
         "test_ISO14443A_mifareRead",

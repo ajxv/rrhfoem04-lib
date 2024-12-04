@@ -619,6 +619,55 @@ class RRHFOEM04:
             print(f"Error in ISO15693_writeMultipleBlocks: {str(e)}")
             return False
 
+    def ISO15693_writeAFI(self, afi: int, with_select_flag: bool = False, uid: str = None) -> bool:
+        """
+        Write the Application Family Identifier (AFI) to an ISO15693 tag.
+        
+        The AFI is a single byte used to identify the type or application family of the tag.
+        This method handles the process of writing the AFI, ensuring compliance with ISO15693 
+        specifications. It also provides options for targeting specific tags or using the 
+        select flag for previously selected tags.
+        
+        Args:
+            afi: The Application Family Identifier, a single byte (e.g., `b'\x00'`).
+            with_select_flag: Whether to use the select flag for a previously selected tag.
+            uid: Optionally, specify the unique identifier of the target tag. If not provided, 
+                the operation targets the selected tag.
+
+        Returns:
+            bool: True if the write operation is successful, False if an error occurs.
+        """
+
+        try:
+            if not 0 <= afi <= 255:
+                raise ValueError("AFI must be an integer between 0 and 255.")
+            
+            # Convert AFI to a single byte for ISO15693 operations
+            afi_byte = afi.to_bytes(1, byteorder="little")
+            
+            # Select appropriate command based on addressing mode
+            if uid:
+                uid_bytes = bytes.fromhex(uid)[::-1]  # Convert to little-endian
+                cmd = CMD_ISO15693_WRITE_AFI_WITH_ADDRESS_FLAG.copy()
+                cmd.extend([*uid_bytes])
+            else:
+                cmd = (CMD_ISO15693_WRITE_AFI_WITH_SELECT_FLAG.copy()
+                      if with_select_flag else CMD_ISO15693_WRITE_AFI.copy())
+                
+            # append write parameters
+            cmd.extend([*afi_byte])
+
+            response = self._send_command(cmd)
+            print(response)
+            if response[3:5] != STATUS_SUCCESS:
+                raise CommandError(f"AFI Write operation failed with status: {response[3:5]}")
+
+            return True
+
+        except Exception as e:
+            print(f"Error in ISO15693_writeAFI: {str(e)}")
+            return False
+        
     # === ISO14443A Protocol Implementation ===
 
     def ISO14443A_Inventory(self) -> Optional[str]:

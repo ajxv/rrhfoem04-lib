@@ -51,6 +51,11 @@ CMD_ISO15693_READ_MULTIPLE_BLOCKS = [0x07, 0x10, 0x09, 0x02]                    
 CMD_ISO15693_READ_MULTIPLE_BLOCKS_WITH_SELECT_FLAG = [0x07, 0x10, 0x09, 0x12]   # Read multiple from selected
 CMD_ISO15693_READ_MULTIPLE_BLOCKS_WITH_ADDRESS_FLAG = [0x0F, 0x10, 0x09, 0x22]  # Read multiple from specific
 
+# ISO15693 AFI operations
+CMD_ISO15693_WRITE_AFI = [0x05, 0x10, 0x0A, 0x02]                    # Write to any tag
+CMD_ISO15693_WRITE_AFI_WITH_SELECT_FLAG = [0x05, 0x10, 0x0A, 0x12]   # Write to selected tag
+CMD_ISO15693_WRITE_AFI_WITH_ADDRESS_FLAG = [0x0D, 0x10, 0x0A, 0x22]  # Write to specific tag
+
 # ISO14443A Commands (Category 0x2F)
 CMD_ISO14443A_INVENTORY = [0x03, 0x2F, 0x01]     # Detect ISO14443A tags
 CMD_ISO14443A_SELECT_CARD = [0x08, 0x2F, 0x02]   # Select specific card for operations
