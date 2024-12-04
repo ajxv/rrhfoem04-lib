@@ -185,4 +185,101 @@ unsigned short CalcCRC(unsigned char data[], unsigned char len) {
 
 **UID:** UID of cards that are detected (Total no. of Received UIDs × 8 bytes).
 
+## 16 Slot Inventory
+
+### Request (With AFI)
+
+| Sr. No. | Parameter               | Length (Byte) | Data     |
+|---------|-------------------------|---------------|----------|
+| 1       | Request Frame Length    | 1             | 05Hex    |
+| 2       | Command Code            | 2             | 1002Hex  |
+| 3       | Flags                   | 1             | 16Hex    |
+| 4       | AFI                     | 1             | XXHex    |
+| 5       | Cyclic Redundancy Check | 2             | XXXXHex  |
+
+### Request (Without AFI)
+
+| Sr. No. | Parameter               | Length (Byte) | Data     |
+|---------|-------------------------|---------------|----------|
+| 1       | Request Frame Length    | 1             | 04Hex    |
+| 2       | Command Code            | 2             | 1002Hex  |
+| 3       | Flags                   | 1             | 06Hex    |
+| 4       | Cyclic Redundancy Check | 2             | XXXXHex  |
+
+### Response
+
+| Sr. No. | Parameter               | Length (Byte) | Data                     |
+|---------|-------------------------|---------------|--------------------------|
+| 1       | Response Frame Length   | 1             | XXHex                   |
+| 2       | Command Code            | 2             | 1002Hex                 |
+| 3       | Error Code              | 2             | XXXXHex                 |
+| 4       | Total No. of Received UID | 1           | XXHex                   |
+| 5       | UID                     | X             | XXXX...XXXXHex (8 bytes) |
+| 6       | Cyclic Redundancy Check | 2             | XXXXHex                 |
+
+**Error Code:** If error code is `FFFFHex`, then the length will be limited to 05Hex, and fields 4 and 5 will be absent; otherwise, the error code is `0000Hex`.
+
+**Total no. of Received UID:** The total number of cards that exist in the reading area.
+
+**UID:** UID of cards which are detected (Total no. of Received UIDs × 8 bytes).
+
+## Read Single Block
+
+### Request
+
+| Sr. No. | Parameter               | Length (Byte) | Data               |
+|---------|-------------------------|---------------|--------------------|
+| 1       | Request Frame Length    | 1             | 06Hex             |
+| 2       | Command Code            | 2             | 1006Hex           |
+| 3       | Flags                   | 1             | 02Hex or 42Hex    |
+| 4       | Block Length            | 1             | XXHex             |
+| 5       | Block Number            | 1             | XXHex             |
+| 6       | Cyclic Redundancy Check | 2             | XXXXHex           |
+
+### Request (With Select Flag)
+
+| Sr. No. | Parameter               | Length (Byte) | Data               |
+|---------|-------------------------|---------------|--------------------|
+| 1       | Request Frame Length    | 1             | 06Hex             |
+| 2       | Command Code            | 2             | 1006Hex           |
+| 3       | Flags                   | 1             | 12Hex or 52Hex    |
+| 4       | Block Length            | 1             | XXHex             |
+| 5       | Block Number            | 1             | XXHex             |
+| 6       | Cyclic Redundancy Check | 2             | XXXXHex           |
+
+### Request (With Address Flag)
+
+| Sr. No. | Parameter               | Length (Byte) | Data               |
+|---------|-------------------------|---------------|--------------------|
+| 1       | Request Frame Length    | 1             | 0EHex             |
+| 2       | Command Code            | 2             | 1006Hex           |
+| 3       | Flags                   | 1             | 22Hex or 62Hex    |
+| 4       | UID                     | 8             | XXXXXXXXHex       |
+| 5       | Block Length            | 1             | XXHex             |
+| 6       | Block Number            | 1             | XXHex             |
+| 7       | Cyclic Redundancy Check | 2             | XXXXHex           |
+
+### Response
+
+| Sr. No. | Parameter               | Length (Byte) | Data               |
+|---------|-------------------------|---------------|--------------------|
+| 1       | Response Frame Length   | 1             | XXHex             |
+| 2       | Command Code            | 2             | 1006Hex           |
+| 3       | Error Code              | 2             | XXXXHex           |
+| 4       | Response Flag           | 1             | XXHex             |
+| 5       | Block Security Status   | 1             | XXHex             |
+| 6       | Data                    | X             | XX...XX Hex       |
+| 7       | Cyclic Redundancy Check | 2             | XXXXHex           |
+
+**Block Length:** Number of bytes to be read.
+
+**Block Number:** Block to be read. (Value lies between 00Hex to FFHex).
+
+**Error Code:** If error code is `FFFFHex`, then the length will be limited to 05Hex, and fields 4, 5, 6 will be absent; otherwise, the error code is `0000Hex`.
+
+**UID:** UID of the card to be read (only if address flag is set).
+
+**Response Flag:** By default, value is 00.
+
+**Block Security Status:** This appears only when Option flag (0x40) is set.
 
