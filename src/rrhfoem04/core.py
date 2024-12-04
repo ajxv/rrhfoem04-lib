@@ -117,7 +117,7 @@ class RRHFOEM04:
             
         Raises:
             ConnectionError: If device is not connected
-            CommunicationError: If communication fails
+            CommunicationError: If transmission fails
         """
         if not self.device:
             raise ConnectionError("Device not connected")
@@ -154,8 +154,11 @@ class RRHFOEM04:
 
             return None
 
+        except ConnectionError:
+            raise
+
         except Exception as e:
-            raise CommunicationError(f"Communication error: {str(e)}")
+            raise CommunicationError(f"Unexpected error during command transmission: {str(e)}")
 
     def _byte_list_to_hex_string(self, data: List[int]) -> str:
         """
@@ -183,7 +186,7 @@ class RRHFOEM04:
         try:
             # Pre-buzzer delay prevents interference with previous operations
             time.sleep(COMMAND_INTERVAL)
-            
+        
             response = self._send_command(CMD_BUZZER)
             
             # Empty response is normal for buzzer command, but check status if present
@@ -194,7 +197,9 @@ class RRHFOEM04:
             # Post-buzzer delay ensures complete sound generation
             time.sleep(COMMAND_INTERVAL)
             return True
-        except RRHFOEMError:
+        
+        except Exception as e:
+            print(f"Error in buzzer activation: {str(e)}")
             return False
 
     def getReaderInfo(self) -> Optional[Dict]:
@@ -439,8 +444,7 @@ class RRHFOEM04:
 
             response = self._send_command(cmd)
             if response[3:5] != STATUS_SUCCESS:
-                print(f"Write operation failed: {response[3:5]}")
-                return False
+                raise CommandError(f"Write operation failed with status: {response[3:5]}")
 
             return True
 
@@ -601,8 +605,7 @@ class RRHFOEM04:
                 
                 response = self._send_command(cmd_with_data)
                 if response[3:5] != STATUS_SUCCESS:
-                    print(f"Write failed at block {current_block}: {response[3:5]}")
-                    return False
+                    raise CommandError(f"Write operation failed with status: {response[3:5]}")
 
             return True
 
@@ -713,29 +716,36 @@ class RRHFOEM04:
             
         Returns:
             bool: True if authentication successful
+        
+        Raises:
+            ValidationError: If parameters are invalid
+            AuthenticationError: If authentication fails
+            TagError: If card is not present or responsive
         """
         try:
             # Input validation
             if not 0 <= block_number <= 255:
-                raise ValueError("Block number must be between 0 and 255")
+                raise ValidationError("Block number must be between 0 and 255")
                 
             if key_type not in ['A', 'B']:
-                raise ValueError("Key type must be 'A' or 'B'")
+                raise ValidationError("Key type must be 'A' or 'B'")
                 
             if len(key) != 12:  # 6 bytes = 12 hex characters
-                raise ValueError("Key must be 6 bytes (12 hex characters)")
+                raise ValidationError("Key must be 6 bytes (12 hex characters)")
             
             # Convert key type to command byte (0x60 for A, 0x61 for B)
             key_type_byte = 0x60 if key_type == 'A' else 0x61
                 
-            # Convert UID and key to bytes
-            uid_bytes = bytes.fromhex(uid)
-            key_bytes = bytes.fromhex(key)
+            try:
+                # Convert UID and key to bytes
+                uid_bytes = bytes.fromhex(uid)
+                key_bytes = bytes.fromhex(key)
+            except ValueError:
+                raise ValidationError("Invalid UID or key format (must be hex string)")
 
             # Select card before authentication
             if not self.ISO14443A_selectCard(uid):
-                print("Card selection failed before authentication")
-                return False
+                raise TagError("Card not present or cannot be selected")
 
             # Build authentication command:
             # [Command][UID][Block][KeyType][Key]
@@ -745,18 +755,17 @@ class RRHFOEM04:
             response = self._send_command(cmd)
             
             if not response:
-                print("No response during authentication")
-                return False
+                raise AuthenticationError("No response during authentication")
                 
             if response[3:5] != STATUS_SUCCESS:
-                print(f"Authentication failed: {response[3:5]}")
-                return False
+                raise AuthenticationError(f"Authentication failed with status: {response[3:5]}")
                 
             return True
             
+        except (ValidationError, TagError, AuthenticationError):
+            raise
         except Exception as e:
-            print(f"Error during authentication: {str(e)}")
-            return False
+            raise AuthenticationError(f"Unexpected error during authentication: {str(e)}")
 
     def ISO14443A_mifareRead(self, uid: str, block_number: int = 0) -> Optional[str]:
         """
