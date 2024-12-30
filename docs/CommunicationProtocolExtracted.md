@@ -444,3 +444,138 @@ unsigned short CalcCRC(unsigned char data[], unsigned char len) {
 #### Notes:
 - **UID**: UID of the card whose AFI needs to be written (only if the address flag is set).
 - **Error Code**: If an error occurs, it returns `FFFFHex`; otherwise, `0000Hex`.
+
+## Get System Information
+
+### Request
+
+| Sr. No. | Parameter               | Length (Byte) | Data      |
+|---------|-------------------------|---------------|-----------|
+| 1       | Request Frame Length    | 1             | 04Hex     |
+| 2       | Command Code            | 2             | 100EHex   |
+| 3       | Flags                   | 1             | 02Hex     |
+| 4       | Cyclic Redundancy Check | 2             | XXXXHex   |
+
+### Request (With Select Flag)
+
+| Sr. No. | Parameter               | Length (Byte) | Data      |
+|---------|-------------------------|---------------|-----------|
+| 1       | Request Frame Length    | 1             | 04Hex     |
+| 2       | Command Code            | 2             | 100EHex   |
+| 3       | Flags                   | 1             | 12Hex     |
+| 4       | Cyclic Redundancy Check | 2             | XXXXHex   |
+
+### Request (With Address Flag)
+
+| Sr. No. | Parameter               | Length (Byte) | Data          |
+|---------|-------------------------|---------------|---------------|
+| 1       | Request Frame Length    | 1             | 0CHex         |
+| 2       | Command Code            | 2             | 100EHex       |
+| 3       | Flags                   | 1             | 22Hex         |
+| 4       | UID                     | 8             | XXXXXXXXHex   |
+| 5       | Cyclic Redundancy Check | 2             | XXXXHex       |
+
+### Response
+
+| Sr. No. | Parameter               | Length (Byte)        | Data             |
+|---------|-------------------------|----------------------|------------------|
+| 1       | Response Frame Length   | 1                    | 06 + Info Len Hex |
+| 2       | Command Code            | 2                    | 100EHex          |
+| 3       | Error Code              | 2                    | XXXXHex          |
+| 4       | Flags                   | 1                    | XXHex            |
+| 5       | Data                    | X                    | XX...XXHex       |
+| 6       | Cyclic Redundancy Check | 2                    | XXXXHex          |
+
+#### Notes:
+- **UID**: UID of the card which is placed near the reader.
+- **Error Code**: If error code is `FFFFHex`, then the length will be limited to `05Hex` and also fields 4 and 5 will be absent; else, error code is `0000Hex`.
+- **Data**: It contains UID and status of AFI & DSFID flags.
+
+## Write Multiple Blocks
+
+### Request
+
+| Sr. No. | Parameter               | Length (Byte) | Data          |
+|---------|-------------------------|---------------|---------------|
+| 1       | Request Frame Length    | 1             | XXHex         |
+| 2       | Command Code            | 2             | 1F02Hex       |
+| 3       | Flags                   | 1             | 02Hex or 42Hex|
+| 4       | Block Length            | 1             | XXHex         |
+| 5       | Block Address           | 1             | XXHex         |
+| 6       | Total Block             | 1             | XXHex         |
+| 7       | Data                    | X             | XX...XXHex    |
+| 8       | Cyclic Redundancy Check | 2             | XXXXHex       |
+
+### Request (With Select Flag)
+
+| Sr. No. | Parameter               | Length (Byte) | Data          |
+|---------|-------------------------|---------------|---------------|
+| 1       | Request Frame Length    | 1             | XXHex         |
+| 2       | Command Code            | 2             | 1F02Hex       |
+| 3       | Flags                   | 1             | 12Hex or 52Hex|
+| 4       | Block Length            | 1             | XXHex         |
+| 5       | Block Address           | 1             | XXHex         |
+| 6       | Total Block             | 1             | XXHex         |
+| 7       | Data                    | X             | XX...XXHex    |
+| 8       | Cyclic Redundancy Check | 2             | XXXXHex       |
+
+### Request (With Address Flag)
+
+| Sr. No. | Parameter               | Length (Byte) | Data          |
+|---------|-------------------------|---------------|---------------|
+| 1       | Request Frame Length    | 1             | XXHex         |
+| 2       | Command Code            | 2             | 1F02Hex       |
+| 3       | Flags                   | 1             | 22Hex or 62Hex|
+| 4       | UID                     | 8             | XXXXXXXXHex   |
+| 5       | Block Length            | 1             | XXHex         |
+| 6       | Block Address           | 1             | XXHex         |
+| 7       | Total Block             | 1             | XXHex         |
+| 8       | Data                    | X             | XX...XXHex    |
+| 9       | Cyclic Redundancy Check | 2             | XXXXHex       |
+
+### Response
+
+| Sr. No. | Parameter               | Length (Byte) | Data      |
+|---------|-------------------------|---------------|-----------|
+| 1       | Response Frame Length   | 1             | 05Hex     |
+| 2       | Command Code            | 2             | 1F02Hex   |
+| 3       | Error Code              | 2             | XXXXHex   |
+| 4       | Cyclic Redundancy Check | 2             | XXXXHex   |
+
+
+#### Notes:
+- **Block Length**: Number of bytes to be written.
+- **Block Number**: Number of block from which to be written (Value lies between 00 to FFHex).
+- **Total Block**: Number of simultaneous blocks to be written.
+- **Data**: The data need be written.
+- **UID**: UID of card to be written (only if address flag is set).
+- **Error Code**: If error occurs, then it returns `FFFFHex`, otherwise `0000Hex`.
+
+# ISO 14443A Commands
+
+## Request Command
+
+### Request
+
+| Sr. No. | Parameter               | Length (Byte) | Data      |
+|---------|-------------------------|---------------|-----------|
+| 1       | Request Frame Length    | 1             | 04Hex     |
+| 2       | Command Code            | 2             | 2001Hex   |
+| 3       | Custom Data             | 1             | 26Hex     |
+| 4       | Cyclic Redundancy Check | 2             | XXXXHex   |
+
+### Response
+
+| Sr. No. | Parameter               | Length (Byte) | Data      |
+|---------|-------------------------|---------------|-----------|
+| 1       | Response Frame Length   | 1             | 07Hex     |
+| 2       | Command Code            | 2             | 2001Hex   |
+| 3       | Error Code              | 2             | XXXXHex   |
+| 4       | Response                | 2             | XXXXHex   |
+| 5       | Cyclic Redundancy Check | 2             | XXXXHex   |
+
+
+#### Notes:
+- **Custom Data**: It is set to `26` (26 is the request idle command in short frame format).
+- **Error Code**: If an error occurs, then it returns an error code as `FFFFHex`, and also field 4 is absent. Else, the error code is `0000Hex`.
+- **Response**: Contains two bytes ATQ (Answer To Request) response from the card.
