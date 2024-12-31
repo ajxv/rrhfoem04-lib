@@ -579,3 +579,89 @@ unsigned short CalcCRC(unsigned char data[], unsigned char len) {
 - **Custom Data**: It is set to `26` (26 is the request idle command in short frame format).
 - **Error Code**: If an error occurs, then it returns an error code as `FFFFHex`, and also field 4 is absent. Else, the error code is `0000Hex`.
 - **Response**: Contains two bytes ATQ (Answer To Request) response from the card.
+
+## Mifare Read
+
+### Request
+
+| Sr. No. | Parameter               | Length (Byte) | Data      |
+|---------|-------------------------|---------------|-----------|
+| 1       | Request Frame Length    | 1             | 04Hex     |
+| 2       | Command Code            | 2             | 2102Hex   |
+| 3       | Block No.               | 1             | XXHex     |
+| 4       | Cyclic Redundancy Check | 2             | XXXXHex   |
+
+### Response
+
+| Sr. No. | Parameter               | Length (Byte) | Data      |
+|---------|-------------------------|---------------|-----------|
+| 1       | Response Frame Length   | 1             | 14Hex     |
+| 2       | Command Code            | 2             | 2102Hex   |
+| 3       | Error Code              | 2             | XXXXHex   |
+| 4       | Data                    | 16            | XX..XXHex |
+| 5       | Cyclic Redundancy Check | 2             | XXXXHex   |
+
+
+#### Notes:
+- **Block No.**: Number of the block to read.
+- **Error Code**: If an error occurs, it returns an error code as `FFFFHex`, and field 4 is absent. Otherwise, the error code is `0000Hex`.
+- **Data**: Data to be read from the card.
+
+## Mifare Write
+
+### Request
+
+| Sr. No. | Parameter               | Length (Byte) | Data      |
+|---------|-------------------------|---------------|-----------|
+| 1       | Request Frame Length    | 1             | 14Hex     |
+| 2       | Command Code            | 2             | 2103Hex   |
+| 3       | Block No.               | 1             | XXHex     |
+| 4       | Data                    | 16            | XX..XXHex |
+| 5       | Cyclic Redundancy Check | 2             | XXXXHex   |
+
+### Response
+
+| Sr. No. | Parameter               | Length (Byte) | Data      |
+|---------|-------------------------|---------------|-----------|
+| 1       | Response Frame Length   | 1             | 05Hex     |
+| 2       | Command Code            | 2             | 2103Hex   |
+| 3       | Error Code              | 2             | XXXXHex   |
+| 4       | Cyclic Redundancy Check | 2             | XXXXHex   |
+
+
+#### Notes:
+- **Block No.**: Number of the block to be written.
+- **Data**: Data written to the card.
+- **Error Code**: If an error occurs, it returns an error code as `FFFFHex`. Otherwise, the error code is `0000Hex`.
+
+## Inventory (14443A)
+
+### Request
+
+| Sr. No. | Parameter               | Length (Byte) | Data      |
+|---------|-------------------------|---------------|-----------|
+| 1       | Request Frame Length    | 1             | 03Hex     |
+| 2       | Command Code            | 2             | 2F01Hex   |
+| 3       | Cyclic Redundancy Check | 2             | XXXXHex   |
+
+
+### Response
+
+| Sr. No. | Parameter               | Length (Byte) | Data           |
+|---------|-------------------------|---------------|----------------|
+| 1       | Response Frame Length   | 1             | XXHex          |
+| 2       | Command Code            | 2             | 2F01Hex        |
+| 3       | Error Code              | 2             | XXXXHex        |
+| 4       | UID Length              | 1             | XXHex          |
+| 5       | UID                     | X             | XXXX..XXXHex   |
+| 6       | Cyclic Redundancy Check | 2             | XXXXHex        |
+
+
+#### Notes:
+- **UID Length**: 
+  - UID Length = 4 for 4-byte UID.
+  - UID Length = 7 for 7-byte UID.
+  - UID Length = 10 for 10-byte UID.
+- **UID**: Contains the UID of the card near the reader.
+- **Error Code**: If an error occurs, it returns `FFFFHex`. If fields 4 & 5 are absent, the error code is `0000Hex`.
+
