@@ -63,7 +63,7 @@ CMD_ISO14443A_INVENTORY = [0x03, 0x2F, 0x01]     # Detect ISO14443A tags
 CMD_ISO14443A_SELECT_CARD = [0x08, 0x2F, 0x02]   # Select specific card for operations
 
 # Mifare Classic Commands (Category 0x21)
-CMD_ISO14443A_MIFARE_AUTHENTICATE = [0x0F, 0x21, 0x01]  # Authenticate with key A or B
+CMD_ISO14443A_MIFARE_AUTHENTICATE = [0x0F, 0x21, 0x01]  # Authenticate with key A
 CMD_ISO14443A_MIFARE_READ = [0x04, 0x21, 0x02]          # Read 16-byte block (after auth)
 CMD_ISO14443A_MIFARE_WRITE = [0x14, 0x21, 0x03]         # Write block (after auth)
 

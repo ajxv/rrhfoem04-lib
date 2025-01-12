@@ -665,3 +665,79 @@ unsigned short CalcCRC(unsigned char data[], unsigned char len) {
 - **UID**: Contains the UID of the card near the reader.
 - **Error Code**: If an error occurs, it returns `FFFFHex`. If fields 4 & 5 are absent, the error code is `0000Hex`.
 
+# RR System Level Command
+
+## Get Reader Information
+
+### Request
+
+| Sr. No. | Parameter               | Length (Byte) | Data      |
+|---------|-------------------------|---------------|-----------|
+| 1       | Request Frame Length    | 1             | 03Hex     |
+| 2       | Command Code            | 2             | F000Hex   |
+| 3       | Cyclic Redundancy Check | 2             | XXXXHex   |
+
+
+### Response
+
+| Sr. No. | Parameter               | Length (Byte) | Data        |
+|---------|-------------------------|---------------|-------------|
+| 1       | Response Frame Length   | 1             | 15Hex       |
+| 2       | Command Code            | 2             | F000Hex     |
+| 3       | Error Code              | 2             | XXXXHex     |
+| 4       | Serial Number           | 16            | XX...XXHex  |
+| 5       | Cyclic Redundancy Check | 2             | XXXXHex     |
+
+
+#### Notes:
+- **Error Code**: If an error occurs, the length will be limited to `05Hex`, and field 4 will be absent. The error code will be `FFFFHex`.
+- **Serial Number**: It is 16 bytes and contains data including software version, hardware version, and serial number of the reader.
+
+## Buzzer (Beep)
+
+### Request
+
+| Sr. No. | Parameter               | Length (Byte) | Data      |
+|---------|-------------------------|---------------|-----------|
+| 1       | Request Frame Length    | 1             | 03Hex     |
+| 2       | Command Code            | 2             | F001Hex   |
+| 3       | Cyclic Redundancy Check | 2             | XXXXHex   |
+
+
+### Response
+
+| Sr. No. | Parameter               | Length (Byte) | Data      |
+|---------|-------------------------|---------------|-----------|
+| 1       | Response Frame Length   | 1             | 05Hex     |
+| 2       | Command Code            | 2             | F001Hex   |
+| 3       | Error Code              | 2             | XXXXHex   |
+| 4       | Cyclic Redundancy Check | 2             | XXXXHex   |
+
+
+#### Notes:
+- **Error Code**: If an error occurs, it returns `FFFFHex`; otherwise, it returns `0000Hex`.
+
+
+## Reset Device / Restart Device
+
+### Request
+
+| Sr. No. | Parameter               | Length (Byte) | Data      |
+|---------|-------------------------|---------------|-----------|
+| 1       | Request Frame Length    | 1             | 03Hex     |
+| 2       | Command Code            | 2             | FF03Hex   |
+| 3       | Cyclic Redundancy Check | 2             | XXXXHex   |
+
+
+### Response
+
+| Sr. No. | Parameter               | Length (Byte) | Data      |
+|---------|-------------------------|---------------|-----------|
+| 1       | Response Frame Length   | 1             | 05Hex     |
+| 2       | Command Code            | 2             | FF03Hex   |
+| 3       | Error Code              | 2             | XXXXHex   |
+| 4       | Cyclic Redundancy Check | 2             | XXXXHex   |
+
+
+#### Notes:
+- **Error Code**: If an error occurs, it returns `FFFFHex`; otherwise, it returns `0000Hex`.
