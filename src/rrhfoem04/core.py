@@ -598,20 +598,9 @@ class RRHFOEM04:
         
     def ISO15693_writeMultipleBlocks(self, start_block_number: int, data: str, block_size: int = 4,
                                     with_select_flag: bool = False, uid: str = None) -> bool:
+        
         """
         Write data across multiple blocks of an ISO15693 tag.
-        
-        This method implements a complex write operation that spans multiple
-        memory blocks. It handles:
-        1. Data segmentation into block-sized chunks
-        2. Proper block alignment
-        3. Padding of partial blocks
-        4. Sequential writing with error checking
-        
-        The process ensures data integrity by:
-        - Validating block numbers and boundaries
-        - Padding incomplete blocks with nulls
-        - Checking success of each individual block write
         
         Args:
             start_block_number: First block to write to (0-255)
@@ -623,52 +612,47 @@ class RRHFOEM04:
         Returns:
             bool: True if all blocks written successfully
         """
+
         try:
             if not 0 <= start_block_number <= 255:
                 raise ValueError("Start block number must be between 0 and 255")
 
             # Prepare data by converting to bytes
             data_bytes = bytes(data, "utf-8")
-            
-            # Split data into block-sized chunks
-            data_chunks = [data_bytes[i:i + block_size] 
-                         for i in range(0, len(data_bytes), block_size)]
-            
-            # Validate ending block number
-            end_block = start_block_number + len(data_chunks)
-            if not start_block_number <= end_block <= 255:
-                raise ValueError("Data exceeds available blocks")
-            
-            # Pad last block if necessary
-            if data_chunks and len(data_chunks[-1]) < block_size:
-                data_chunks[-1] = data_chunks[-1].ljust(block_size, b'\x00')
+
+            # Calculate padding length
+            padding_length = (block_size - len(data_bytes) % block_size) % block_size
+
+            # Pad data_bytes with 0 if necessary
+            if padding_length > 0:
+                data_bytes = data_bytes + (b'\x00' * padding_length)
+
+            total_blocks = len(data_bytes) // block_size
 
             # Prepare base command structure
             if uid:
                 uid_bytes = bytes.fromhex(uid)[::-1]
-                cmd = CMD_ISO15693_WRITE_SINGLE_BLOCK_WITH_ADDRESS_FLAG.copy()
+                cmd = CMD_ISO15693_WRITE_MULTIPLE_BLOCK_WITH_ADDRESS_FLAG.copy()
                 cmd.extend([*uid_bytes])
             else:
-                cmd = (CMD_ISO15693_WRITE_SINGLE_BLOCK_WITH_SELECT_FLAG.copy()
-                      if with_select_flag else CMD_ISO15693_WRITE_SINGLE_BLOCK.copy())
+                cmd = (CMD_ISO15693_WRITE_MULTIPLE_BLOCK_WITH_SELECT_FLAG.copy()
+                      if with_select_flag else CMD_ISO15693_WRITE_MULTIPLE_BLOCK.copy())
             
-            cmd[0] += block_size  # Adjust command length
+            cmd[0] += len(data_bytes)  # Adjust command length
 
-            # Write data blocks sequentially
-            for block_offset, data_chunk in enumerate(data_chunks):
-                current_block = start_block_number + block_offset
-                cmd_with_data = cmd + [block_size, current_block, *data_chunk]
-                
-                response = self._send_command(cmd_with_data)
-                if response[3:5] != STATUS_SUCCESS:
-                    raise CommandError(f"Write operation failed with status: {response[3:5]}")
+            cmd.extend([block_size, start_block_number, total_blocks, *data_bytes])
+
+            response = self._send_command(cmd)
+
+            if response[3:5] != STATUS_SUCCESS:
+                raise CommandError(f"Write operation failed with status: {response[3:5]}")
 
             return True
 
         except Exception as e:
             print(f"Error in ISO15693_writeMultipleBlocks: {str(e)}")
             return False
-
+        
     def ISO15693_writeAFI(self, afi: int, with_select_flag: bool = False, uid: str = None) -> bool:
         """
         Write the Application Family Identifier (AFI) to an ISO15693 tag.

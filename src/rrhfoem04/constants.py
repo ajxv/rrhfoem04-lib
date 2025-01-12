@@ -48,10 +48,15 @@ CMD_ISO15693_WRITE_SINGLE_BLOCK = [0x06, 0x10, 0x07, 0x02]                    # 
 CMD_ISO15693_WRITE_SINGLE_BLOCK_WITH_SELECT_FLAG = [0x06, 0x10, 0x07, 0x12]   # Write to selected tag
 CMD_ISO15693_WRITE_SINGLE_BLOCK_WITH_ADDRESS_FLAG = [0x0E, 0x10, 0x07, 0x22]  # Write to specific tag
 
-# ISO15693 Multiple Block Operations
+# ISO15693 read Multiple Blocks
 CMD_ISO15693_READ_MULTIPLE_BLOCKS = [0x07, 0x10, 0x09, 0x02]                    # Read multiple blocks
 CMD_ISO15693_READ_MULTIPLE_BLOCKS_WITH_SELECT_FLAG = [0x07, 0x10, 0x09, 0x12]   # Read multiple from selected
 CMD_ISO15693_READ_MULTIPLE_BLOCKS_WITH_ADDRESS_FLAG = [0x0F, 0x10, 0x09, 0x22]  # Read multiple from specific
+
+# ISO15693 write multiple block: arr[0] frame length should be re-calculated appended dynamically 
+CMD_ISO15693_WRITE_MULTIPLE_BLOCK = [0x07, 0x1F, 0x02, 0x02]                    # Write to any tag
+CMD_ISO15693_WRITE_MULTIPLE_BLOCK_WITH_SELECT_FLAG = [0x07, 0x1F, 0x02, 0x12]   # Write to selected tag
+CMD_ISO15693_WRITE_MULTIPLE_BLOCK_WITH_ADDRESS_FLAG = [0x0F, 0x1F, 0x02, 0x22]  # Write to specific tag
 
 # ISO15693 AFI operations
 CMD_ISO15693_WRITE_AFI = [0x05, 0x10, 0x0A, 0x02]                    # Write to any tag
