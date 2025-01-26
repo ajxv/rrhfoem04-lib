@@ -37,6 +37,11 @@ if tags:
 reader.close()
 ```
 
+> **Note:**
+>
+> The `hidapi` module (dependency to interact with hid modules) requires superuser privilage to run. Therefore, run your python script with `sudo` if you are using linux based system. eg: `sudo python3 script.py`
+
+
 ## Contributing
 
 Contributions are welcome! Please refer to the docs folder for more details on the library's internals and how to contribute.
