@@ -1,4 +1,6 @@
 # RRHFOEM04 Python Library
+[![PyPI](https://img.shields.io/pypi/v/rrhfoem04-lib?label=pypi)](https://pypi.org/project/rrhfoem04-lib/)
+[![License](https://img.shields.io/pypi/l/mkdocs-badges)](https://github.com/ajxv/rrhfoem04-lib/blob/main/LICENSE)
 
 This Python library provides an interface to interact with the RRHFOEM04 RFID/NFC reader. The library supports multiple RFID protocols including ISO15693 and ISO14443A, allowing for various card operations such as inventory scanning, reading, and writing.
 
