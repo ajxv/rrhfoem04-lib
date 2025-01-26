@@ -22,9 +22,10 @@ class TestRRHFOEM04(unittest.TestCase):
         """Test the buzzer"""
         try:
             result = self.reader.buzzer_beep()
-            self.assertTrue(result, "Buzzer test failed")
-            if result:
-                print("Buzzer test successful!")
+            
+            print(result)
+            self.assertTrue(result.success, "Buzzer test failed")            
+
         except Exception as e:
             self.fail(f"Unexpected error: {e}")
     
@@ -32,9 +33,10 @@ class TestRRHFOEM04(unittest.TestCase):
         """Test buzzer on"""
         try:
             result = self.reader.buzzer_on()
-            self.assertTrue(result, "Buzzer on test failed")
-            if result:
-                print("Buzzer on test successful!")
+            
+            print(result)
+            self.assertTrue(result.success, "Buzzer on test failed")
+            
         except Exception as e:
             self.fail(f"Unexpected error: {e}")
     
@@ -42,9 +44,10 @@ class TestRRHFOEM04(unittest.TestCase):
         """Test buzzer off"""
         try:
             result = self.reader.buzzer_off()
-            self.assertTrue(result, "Buzzer off test failed")
-            if result:
-                print("Buzzer off test successful!")
+            
+            print(result)
+            self.assertTrue(result.success, "Buzzer off test failed")
+            
         except Exception as e:
             self.fail(f"Unexpected error: {e}")
 
@@ -52,48 +55,44 @@ class TestRRHFOEM04(unittest.TestCase):
         """Test getting reader information"""
         try:
             print("Getting reader information...")
-            info = self.reader.getReaderInfo()
+            result = self.reader.getReaderInfo()
             
-            self.assertIsNotNone(info, "Could not get reader information")
-            if info:
-                print(f"Model: {info['model']}")
-                print(f"Serial: {info['serial']}")
+            print(result)
+            self.assertTrue(result.success, "Could not get reader information")
+
         except Exception as e:
             self.fail(f"Unexpected error: {e}")
 
     def test_ISO15693_singleSlotInventory(self):
         """Test ISO15693 single slot inventory scan"""
         try:
-            uids = self.reader.ISO15693_singleSlotInventory()
-            self.assertIsNotNone(uids, "No tags detected")
-            if uids:
-                # Print detected UIDs
-                print(f"No. of tags detected: {len(uids)}")
-                for uid in uids:
-                    print(f"Detected Tag UID: {uid}")
+            result = self.reader.ISO15693_singleSlotInventory()
+
+            print(result)
+            self.assertTrue(result.success, "ISO15693 Single slot inventory failed")
+
         except Exception as e:
             self.fail(f"Unexpected error: {e}")
     
     def test_ISO15693_16SlotInventory(self):
         """Test ISO15693 16 slot inventory scan"""
         try:
-            uids = self.reader.ISO15693_16SlotInventory()
-            self.assertIsNotNone(uids, "No tags detected")
-            if uids:
-                # Print detected UIDs
-                print(f"No. of tags detected: {len(uids)}")
-                for uid in uids:
-                    print(f"Detected Tag UID: {uid}")
+            result = self.reader.ISO15693_16SlotInventory()
+
+            print(result)
+            self.assertTrue(result.success, "ISO15693 16 slot inventory failed")
+
         except Exception as e:
             self.fail(f"Unexpected error: {e}")
     
     def test_ISO14443A_Inventory(self):
         """Test ISO14443A inventory scan"""
         try:
-            uid = self.reader.ISO14443A_Inventory()
-            self.assertIsNotNone(uid, "No tags detected")
-            if uid:
-                print(f"Detected Tag UID: {uid}")
+            result = self.reader.ISO14443A_Inventory()
+
+            print(result)
+            self.assertTrue(result.success, "No tags detected")
+            
         except Exception as e:
             self.fail(f"Unexpected error: {e}")
     
@@ -103,11 +102,11 @@ class TestRRHFOEM04(unittest.TestCase):
             block_number = 0
             # block_data = self.reader.ISO15693_readSingleBlock(block_number, uid="A86E33E8080802E0")
             # block_data = self.reader.ISO15693_readSingleBlock(block_number, with_select_flag=True)
-            block_data = self.reader.ISO15693_readSingleBlock(block_number)
-            self.assertIsNotNone(block_data, "Error Reading ISO15693 single block data")
+            result = self.reader.ISO15693_readSingleBlock(block_number)
+
+            print(result)
+            self.assertTrue(result.success, "Error Reading ISO15693 single block data")
             
-            if block_data:
-                print(f"Data read at block [{block_number}]: {block_data}")
         except Exception as e:
             self.fail(f"Unexpected error: {e}")
     
@@ -118,8 +117,9 @@ class TestRRHFOEM04(unittest.TestCase):
             data = "ACC"
             # write_success = self.reader.ISO15693_writeSingleBlock(block_number, data, uid="A86E33E8080802E0")
             # write_success = self.reader.ISO15693_writeSingleBlock(block_number, data, with_select_flag=True)
-            write_success = self.reader.ISO15693_writeSingleBlock(block_number, data)
-            self.assertTrue(write_success, "Error Writing ISO15693 single block")
+            result = self.reader.ISO15693_writeSingleBlock(block_number, data)
+            print(result)
+            self.assertTrue(result.success, "Error Writing ISO15693 single block")
             
             print(f"Successfully written data: [{data}] at block: [{block_number}]")
         except Exception as e:
@@ -132,8 +132,10 @@ class TestRRHFOEM04(unittest.TestCase):
             data = "ACC12345"
             # write_success = self.reader.ISO15693_writeMultipleBlock(start_block_number, data, uid="A86E33E8080802E0")
             # write_success = self.reader.ISO15693_writeMultipleBlock(start_block_number, data, with_select_flag=True)
-            write_success = self.reader.ISO15693_writeMultipleBlocks(start_block_number, data)
-            self.assertTrue(write_success, "Error Writing ISO15693 Multiple block")
+            result = self.reader.ISO15693_writeMultipleBlocks(start_block_number, data)
+
+            print(result)
+            self.assertTrue(result.success, "Error Writing ISO15693 Multiple block")
             
             print(f"Successfully written data: [{data}] starting from block: [{start_block_number}]")
         except Exception as e:
@@ -147,23 +149,24 @@ class TestRRHFOEM04(unittest.TestCase):
 
             # block_data = self.reader.ISO15693_readMultipleBlocks(block_number,total_blocks=total_blocks, uid="A86E33E8080802E0")
             # block_data = self.reader.ISO15693_readMultipleBlocks(block_number,total_blocks=total_blocks, with_select_flag=True)
-            block_data = self.reader.ISO15693_readMultipleBlocks(block_number, total_blocks=total_blocks)
-            self.assertIsNotNone(block_data, "Error Reading ISO15693 Multiple block data")
-            
-            if block_data:
-                print(f"Data read at block [{block_number}]: {block_data}")
+
+            result = self.reader.ISO15693_readMultipleBlocks(block_number, total_blocks=total_blocks)
+            print(result)
+            self.assertTrue(result.success, "Error Reading ISO15693 Multiple block data")
         except Exception as e:
             self.fail(f"Unexpected error: {e}")
 
     def test_ISO14443A_mifareAuthenticate(self):
         """Test ISO14443A_mifareAuthenticate"""
         try:
-            block_number = 4
-            uid="239B75BC"
-            authenticate_result = self.reader.ISO14443A_mifareAuthenticate(uid, block_number=block_number)
-            self.assertTrue(authenticate_result, "ISO14443A_mifareAuthenticate test failed")
-            if authenticate_result:
-                print("ISO14443A_mifareAuthenticate test successful!")
+            block_number = 5
+            uid="E3580128"
+
+            result = self.reader.ISO14443A_mifareAuthenticate(uid, block_number=block_number)
+
+            print(result)
+            self.assertTrue(result.success, "ISO14443A_mifareAuthenticate test failed")
+           
         except Exception as e:
             self.fail(f"Unexpected error: {e}")
 
@@ -171,12 +174,12 @@ class TestRRHFOEM04(unittest.TestCase):
         """Test ISO14443A mifare read"""
         try:
             block_number = 4
-            uid="83DBDA2F"
+            uid="E3580128"
 
-            block_data = self.reader.ISO14443A_mifareRead(uid=uid, block_number=block_number)
-            self.assertIsNotNone(block_data, "No data read")
-            if block_data:
-                print(f"Read block [{block_number}] data: {block_data}")
+            result = self.reader.ISO14443A_mifareRead(uid=uid, block_number=block_number)
+
+            print(result)
+            self.assertTrue(result.success, "No data read")
         except Exception as e:
             self.fail(f"Unexpected error: {e}")
     
@@ -184,11 +187,12 @@ class TestRRHFOEM04(unittest.TestCase):
         """Test ISO14443A mifare read"""
         try:
             block_number = 4
-            uid="83DBDA2F"
+            uid="E3580128"
             data = "KJ000F00#"
 
-            write_response = self.reader.ISO14443A_mifareWrite(uid=uid, data=data, block_number=block_number)
-            self.assertTrue(write_response, "Failed to write data")
+            result = self.reader.ISO14443A_mifareWrite(uid=uid, data=data, block_number=block_number)
+            print(result)
+            self.assertTrue(result.success, "Failed to write data")
 
             print(f"Successfully written data: [{data}] to block: [{block_number}]")
         except Exception as e:
@@ -200,8 +204,9 @@ class TestRRHFOEM04(unittest.TestCase):
             afi = 7
             # write_success = self.reader.ISO15693_writeAFI(afi=afi, uid="A86E33E8080802E0")
             # write_success = self.reader.ISO15693_writeAFI(afi=afi, with_select_flag=True)
-            write_success = self.reader.ISO15693_writeAFI(afi=afi)
-            self.assertTrue(write_success, "Error Writing ISO15693 AFI Flag")
+            result = self.reader.ISO15693_writeAFI(afi=afi)
+            print(result)
+            self.assertTrue(result.success, "Error Writing ISO15693 AFI Flag")
             
             print(f"Successfully written afi flag: [{afi}]")
         except Exception as e:

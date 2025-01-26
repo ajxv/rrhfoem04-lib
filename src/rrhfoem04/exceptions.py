@@ -6,7 +6,7 @@ enabling precise error handling and debugging. Each exception type corresponds
 to a specific category of errors that can occur during device operations.
 """
 
-class RRHFOEMError(Exception):
+class RRHFOEM04Error(Exception):
     """
     Base exception class for all RRHFOEM04-related errors.
     
@@ -16,7 +16,7 @@ class RRHFOEMError(Exception):
     """
     pass
 
-class ConnectionError(RRHFOEMError):
+class ConnectionError(RRHFOEM04Error):
     """
     Raised when device connection operations fail.
     
@@ -28,7 +28,7 @@ class ConnectionError(RRHFOEMError):
     """
     pass
 
-class CommandError(RRHFOEMError):
+class CommandError(RRHFOEM04Error):
     """
     Raised when a command fails to execute properly.
     
@@ -52,7 +52,7 @@ class CommandError(RRHFOEMError):
         super().__init__(f"{message} (Command: {command}, Status: {status})" if command 
                         else message)
 
-class CommunicationError(RRHFOEMError):
+class CommunicationError(RRHFOEM04Error):
     """
     Raised when device communication fails after connection.
     
@@ -64,7 +64,7 @@ class CommunicationError(RRHFOEMError):
     """
     pass
 
-class ValidationError(RRHFOEMError):
+class ValidationError(RRHFOEM04Error):
     """
     Raised when input parameters fail validation.
     
@@ -76,7 +76,7 @@ class ValidationError(RRHFOEMError):
     """
     pass
 
-class TagError(RRHFOEMError):
+class TagError(RRHFOEM04Error):
     """
     Raised for tag-specific errors.
     
@@ -88,7 +88,7 @@ class TagError(RRHFOEMError):
     """
     pass
 
-class AuthenticationError(RRHFOEMError):
+class AuthenticationError(RRHFOEM04Error):
     """
     Raised when card authentication fails.
     

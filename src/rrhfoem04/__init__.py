@@ -2,7 +2,7 @@
 
 from .core import RRHFOEM04
 from .exceptions import (
-    RRHFOEMError,
+    RRHFOEM04Error,
     ConnectionError,
     CommandError,
     CommunicationError,
