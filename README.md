@@ -21,17 +21,16 @@ from rrhfoem04 import RRHFOEM04
 reader = RRHFOEM04(auto_connect=True)
 
 # Activate the buzzer
-if reader.buzzer_on():
+if reader.buzzer_on().success:
     print("Buzzer activated")
 
 # Get reader information
-info = reader.getReaderInfo()
-print(f"Reader Model: {info['model']}, Serial: {info['serial']}")
+result = reader.getReaderInfo()
+print(f"getReaderInfo result: {result}")
 
 # Perform an ISO15693 inventory scan
-tags = reader.ISO15693_singleSlotInventory()
-if tags:
-    print(f"Detected tags: {tags}")
+result = reader.ISO15693_singleSlotInventory()
+print(f"ISO15693_singleSlotInventory result: {result}")
 
 # Close the reader connection
 reader.close()
