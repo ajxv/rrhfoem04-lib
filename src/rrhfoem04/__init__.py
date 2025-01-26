@@ -2,17 +2,22 @@
 
 from .core import RRHFOEM04
 from .exceptions import (
-    RRHFOEMError,
+    RRHFOEM04Error,
     ConnectionError,
     CommandError,
-    CommunicationError
+    CommunicationError,
+    ValidationError,
+    TagError,
+    AuthenticationError
 )
 
-__version__ = "0.1.0"
 __all__ = [
     'RRHFOEM04',
     'RRHFOEMError',
     'ConnectionError',
     'CommandError',
     'CommunicationError',
+    'ValidationError',
+    'TagError',
+    'AuthenticationError'
 ]
