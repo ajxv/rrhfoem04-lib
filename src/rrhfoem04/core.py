@@ -9,15 +9,24 @@ and timing controls for reliable communication.
 """
 
 import time
-from typing import List, Optional, Dict
+from typing import List, Optional
 import hid  # Hardware Interface Device library for USB communication
 import re
-import traceback
+import logging
 
 from .constants import *
 from .exceptions import *
 from .utils import RRHFOEM04Result
 
+# Configure logging
+logging.basicConfig(
+    level=logging.DEBUG,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    handlers=[
+        logging.FileHandler("rrhfoem04.log"),
+        logging.StreamHandler()
+    ]
+)
 
 class RRHFOEM04:
     """
@@ -36,6 +45,8 @@ class RRHFOEM04:
             auto_connect: If True, automatically attempts to connect to the device
                         during initialization.
         """
+        self.logger = logging.getLogger(self.__class__.__name__)
+        self.logger.debug("Initializing RRHFOEM04 interface")
         self.device: Optional[hid.device] = None
         self._last_command_time = 0  # Tracks timing between commands
         # Add tracking for Mifare card state
@@ -61,14 +72,17 @@ class RRHFOEM04:
         Raises:
             ConnectionError: If connection fails for any reason
         """
+        self.logger.debug("Attempting to connect to the device")
         try:
             self.device = hid.device()
             self.device.open(VENDOR_ID, PRODUCT_ID)
             self.device.set_nonblocking(1)  # Enable non-blocking mode for better timing control
             time.sleep(0.1)  # Allow device to stabilize after connection
+            self.logger.info("Device connected successfully")
             return True
         except Exception as e:
-            raise ConnectionError(f"Failed to connect: {str(e)}")
+            self.logger.error(f"Failed to connect to device: {str(e)}")
+            raise ConnectionError(f"Failed to connect to device: {str(e)}")
 
     def _calc_crc(self, data: List[int]) -> int:
         """
@@ -118,6 +132,7 @@ class RRHFOEM04:
             CommunicationError: If transmission fails
         """
         if not self.device:
+            self.logger.error("Device not connected")
             raise ConnectionError("Device not connected")
 
         try:
@@ -150,12 +165,14 @@ class RRHFOEM04:
                     return re.findall('..?', self._byte_list_to_hex_string(response))
                 time.sleep(RETRY_DELAY)
 
+            self.logger.warning("No response received after retries")
             return None
 
         except ConnectionError:
             raise
 
         except Exception as e:
+            self.logger.error(f"Unexpected error during command transmission: {str(e)}")
             raise CommunicationError(f"Unexpected error during command transmission: {str(e)}")
 
     def _byte_list_to_hex_string(self, data: List[int]) -> str:
@@ -189,15 +206,16 @@ class RRHFOEM04:
             
             # Empty response is normal for buzzer command, but check status if present
             if response and response[3:5] != STATUS_SUCCESS:
-                print(f"Error activating buzzer: {response[3:5]}")
+                self.logger.error(f"Error activating buzzer: {response[3:5]}")
                 return RRHFOEM04Result(success=False, message="Operation Failed")
             
             # Post-buzzer delay ensures complete sound generation
             time.sleep(COMMAND_INTERVAL)
+            self.logger.info("Buzzer activated successfully")
             return RRHFOEM04Result(success=True, message="Operation Successful")
         
         except Exception as e:
-            print(f"Error in buzzer activation: {str(e)}")
+            self.logger.error(f"Error in buzzer activation: {str(e)}")
             return RRHFOEM04Result(success=False, message=f"Operation Failed: <{str(e)}>")
     
     def buzzer_on(self) -> RRHFOEM04Result:
@@ -216,13 +234,13 @@ class RRHFOEM04:
             
             # Empty response is normal for buzzer command, but check status if present
             if response and response[3:5] != STATUS_SUCCESS:
-                print(f"Error activating buzzer: {response[3:5]}")
+                self.logger.error(f"Error activating buzzer: {response[3:5]}")
                 return RRHFOEM04Result(success=False, message="Operation Failed")
 
             return RRHFOEM04Result(success=True, message="Operation Successful")
         
         except Exception as e:
-            print(f"Error in buzzer activation: {str(e)}")
+            self.logger.error(f"Error in buzzer activation: {str(e)}")
             return RRHFOEM04Result(success=False, message=f"Operation Failed: <{str(e)}>")
 
     def buzzer_off(self) -> RRHFOEM04Result:
@@ -241,13 +259,13 @@ class RRHFOEM04:
             
             # Empty response is normal for buzzer command, but check status if present
             if response and response[3:5] != STATUS_SUCCESS:
-                print(f"Error deactivating buzzer: {response[3:5]}")
+                self.logger.error(f"Error deactivating buzzer: {response[3:5]}")
                 return RRHFOEM04Result(success=False, message="Operation Failed")
 
             return RRHFOEM04Result(success=True, message="Operation Successful")
         
         except Exception as e:
-            print(f"Error in buzzer deactivation: {str(e)}")
+            self.logger.error(f"Error in buzzer deactivation: {str(e)}")
             return RRHFOEM04Result(success=False, message=f"Operation Failed: <{str(e)}>")
         
     def getReaderInfo(self) -> RRHFOEM04Result:
@@ -266,11 +284,11 @@ class RRHFOEM04:
         try:
             response = self._send_command(CMD_GET_READER_INFO)
             if not response:
-                print("No response received from get_reader_info command")
+                self.logger.error("No response received from get_reader_info command")
                 return RRHFOEM04Result(success=False, message="No Response")
             
             if response[3:5] != STATUS_SUCCESS:
-                print(f"Error getting reader information: {response[3:5]}")
+                self.logger.error(f"Error getting reader information: {response[3:5]}")
                 return RRHFOEM04Result(success=False, message="Operation Failed")
             
             # Extract and parse reader information section
@@ -286,7 +304,7 @@ class RRHFOEM04:
             return RRHFOEM04Result(success=True, message="Operation Successful", data={'model': model, 'serial': serial}) 
             
         except Exception as e:
-            print(f"Error in get_reader_info: {e}")
+            self.logger.error(f"Error in get_reader_info: {e}")
             return RRHFOEM04Result(success=False, message=f"Operation Failed: <{str(e)}>")
 
     # === ISO15693 Protocol Implementation ===
@@ -316,7 +334,7 @@ class RRHFOEM04:
             response = self._send_command(CMD_ISO15693_SINGLE_SLOT_INVENTORY)
 
             if response[3:5] != STATUS_SUCCESS:
-                print(f"Error in inventory scan: {response[3:5]}")
+                self.logger.error(f"Error in inventory scan: {response[3:5]}")
                 return RRHFOEM04Result(success=False, message="Operation Failed")
             
             tag_uids = []
@@ -330,11 +348,11 @@ class RRHFOEM04:
                 uid = ''.join(response[start_index:start_index + 8][::-1])
                 tag_uids.append(uid)
 
-            return RRHFOEM04Result(success=True, message="Operation Successful", data={"uids": tag_uids})
+            return RRHFOEM04Result(success=True, message="Operation Successful", data=tag_uids)
             
         except Exception as e:
-            print(f"Error in ISO15693 inventory scan: {str(e)}")
-            return RRHFOEM04Result(success=True, message=f"Operation Failed: <{str(e)}>")
+            self.logger.error(f"Error in ISO15693 inventory scan: {str(e)}")
+            return RRHFOEM04Result(success=False, message=f"Operation Failed: <{str(e)}>")
     
     def ISO15693_16SlotInventory(self) -> RRHFOEM04Result:
         """
@@ -364,7 +382,7 @@ class RRHFOEM04:
             response = self._send_command(CMD_ISO15693_16_SLOT_INVENTORY)
 
             if response[3:5] != STATUS_SUCCESS:
-                print(f"16-slot inventory scan failed: {response[3:5]}")
+                self.logger.error(f"16-slot inventory scan failed: {response[3:5]}")
                 return RRHFOEM04Result(success=False, message="Operation Failed")
             
             tag_uids = []
@@ -379,10 +397,10 @@ class RRHFOEM04:
                 uid = ''.join(response[start_index:start_index + 8][::-1])
                 tag_uids.append(uid)
 
-            return RRHFOEM04Result(success=True, message="Operation Successful", data={"uids": tag_uids})
+            return RRHFOEM04Result(success=True, message="Operation Successful", data=tag_uids)
             
         except Exception as e:
-            print(f"Error in 16-slot inventory scan: {str(e)}")
+            self.logger.error(f"Error in 16-slot inventory scan: {str(e)}")
             return RRHFOEM04Result(success=False, message=f"Operation Failed: <{str(e)}>")
 
     def ISO15693_readSingleBlock(self, block_number: int, block_size: int = 4, with_select_flag: bool = False, uid: str = None) -> RRHFOEM04Result:
@@ -421,16 +439,16 @@ class RRHFOEM04:
 
             response = self._send_command(cmd)
             if response[3:5] != STATUS_SUCCESS:
-                print(f"Read operation failed: {response[3:5]}")
+                self.logger.error(f"Read operation failed: {response[3:5]}")
                 return RRHFOEM04Result(success=False, message="Operation Failed")
             
             # Extract and reverse block data (convert from little-endian)
             block_data = response[6:6 + block_size]
 
-            return RRHFOEM04Result(success=True, message="Operation Successful", data={"data": ''.join(block_data[::-1])})
+            return RRHFOEM04Result(success=True, message="Operation Successful", data=''.join(block_data[::-1]))
 
         except Exception as e:
-            print(f"Error in ISO15693_readSingleBlock: {str(e)}")
+            self.logger.error(f"Error in ISO15693_readSingleBlock: {str(e)}")
             return RRHFOEM04Result(success=False, message=f"Operation Failed: <{str(e)}>")
 
     def ISO15693_writeSingleBlock(self, block_number: int, data: str, block_size: int = 4, with_select_flag: bool = False, uid: str = None) -> RRHFOEM04Result:
@@ -483,12 +501,13 @@ class RRHFOEM04:
 
             response = self._send_command(cmd)
             if response[3:5] != STATUS_SUCCESS:
+                self.logger.error(f"Write operation failed with status: {response[3:5]}")
                 raise CommandError(f"Write operation failed with status: {response[3:5]}")
 
             return RRHFOEM04Result(success=True, message="Operation Successful")
 
         except Exception as e:
-            print(f"Error in ISO15693_writeSingleBlock: {str(e)}")
+            self.logger.error(f"Error in ISO15693_writeSingleBlock: {str(e)}")
             return RRHFOEM04Result(success=False, message=f"Operation Failed: <{str(e)}>")
 
     def ISO15693_readMultipleBlocks(self, start_block_number: int, total_blocks: int = 5, block_size: int = 4, with_select_flag: bool = False, uid: str = None) -> RRHFOEM04Result:
@@ -552,7 +571,7 @@ class RRHFOEM04:
 
             response = self._send_command(cmd)
             if response[3:5] != STATUS_SUCCESS:
-                print(f"Multiple block read failed: {response[3:5]}")
+                self.logger.error(f"Multiple block read failed: {response[3:5]}")
                 return RRHFOEM04Result(success=False, message="Operation Failed")
             
             # Process the multi-block response
@@ -568,10 +587,10 @@ class RRHFOEM04:
                 data_blocks.append(''.join(block[::-1]))
             
             # Concatenate all blocks into final result
-            return RRHFOEM04Result(success=True, message="Operation Successful", data={"data": ''.join(data_blocks)}) 
+            return RRHFOEM04Result(success=True, message="Operation Successful", data=''.join(data_blocks)) 
 
         except Exception as e:
-            print(f"Error in multiple block read: {str(e)}")
+            self.logger.error(f"Error in multiple block read: {str(e)}")
             return RRHFOEM04Result(success=False, message=f"Operation Failed: <{str(e)}>")
         
     def ISO15693_writeMultipleBlocks(self, start_block_number: int, data: str, block_size: int = 4, with_select_flag: bool = False, uid: str = None) -> RRHFOEM04Result:
@@ -622,12 +641,13 @@ class RRHFOEM04:
             response = self._send_command(cmd)
 
             if response[3:5] != STATUS_SUCCESS:
+                self.logger.error(f"Write operation failed with status: {response[3:5]}")
                 raise CommandError(f"Write operation failed with status: {response[3:5]}")
 
             return RRHFOEM04Result(success=True, message="Operation Succesful")
 
         except Exception as e:
-            print(f"Error in ISO15693_writeMultipleBlocks: {str(e)}")
+            self.logger.error(f"Error in ISO15693_writeMultipleBlocks: {str(e)}")
             return RRHFOEM04Result(success=False, message=f"Operation Failed: <{str(e)}>")
         
     def ISO15693_writeAFI(self, afi: int, with_select_flag: bool = False, uid: str = None) -> RRHFOEM04Result:
@@ -670,12 +690,13 @@ class RRHFOEM04:
 
             response = self._send_command(cmd)
             if response[3:5] != STATUS_SUCCESS:
+                self.logger.error(f"AFI Write operation failed with status: {response[3:5]}")
                 raise CommandError(f"AFI Write operation failed with status: {response[3:5]}")
 
             return RRHFOEM04Result(success=True, message="Operation Successful")
 
         except Exception as e:
-            print(f"Error in ISO15693_writeAFI: {str(e)}")
+            self.logger.error(f"Error in ISO15693_writeAFI: {str(e)}")
             return RRHFOEM04Result(success=False, message=f"Operation Failed: <{str(e)}>")
         
     # === ISO14443A Protocol Implementation ===
@@ -700,17 +721,17 @@ class RRHFOEM04:
             response = self._send_command(CMD_ISO14443A_INVENTORY)
 
             if response[3:5] != STATUS_SUCCESS:
-                print(f"Inventory scan failed: {response[3:5]}")
+                self.logger.error(f"Inventory scan failed: {response[3:5]}")
                 return RRHFOEM04Result(success=False, message="Operation Failed")
 
             # Extract UID length and data
             uid_length = int(response[5])
             uid = ''.join(response[6:6 + uid_length])
 
-            return RRHFOEM04Result(success=True, message="Operation Successful", data={"uid": uid})
+            return RRHFOEM04Result(success=True, message="Operation Successful", data=uid)
             
         except Exception as e:
-            print(f"Error in ISO14443A inventory scan: {str(e)}")
+            self.logger.error(f"Error in ISO14443A inventory scan: {str(e)}")
             return RRHFOEM04Result(success=False, message=f"Operation Failed: <{str(e)}>")
 
     def ISO14443A_selectCard(self, uid: str, uid_length: int = 4) -> RRHFOEM04Result:
@@ -744,17 +765,17 @@ class RRHFOEM04:
             response = self._send_command(cmd)
 
             if not response:
-                print("No response from card during selection")
+                self.logger.error("No response from card during selection")
                 return RRHFOEM04Result(success=False, message="No Response")
                 
             if response[3:5] != STATUS_SUCCESS:
-                print(f"Card selection failed: {response[3:5]}")
+                self.logger.error(f"Card selection failed: {response[3:5]}")
                 return RRHFOEM04Result(success=False, message="Operation Failed")
 
             return RRHFOEM04Result(success=True, message="Operation Successful")
     
         except Exception as e:
-            print(f"Error in card selection: {str(e)}")
+            self.logger.error(f"Error in card selection: {str(e)}")
             return RRHFOEM04Result(success=False, message=f"Operation Failed: <{str(e)}>")
 
     def ISO14443A_mifareAuthenticate(self, uid: str, block_number: int, key_type: str = 'A', key: str = "FFFFFFFFFFFF") -> RRHFOEM04Result:
@@ -809,6 +830,7 @@ class RRHFOEM04:
             # Check if we need to select the card
             if self._mifare_selected_uid != uid:
                 if not self.ISO14443A_selectCard(uid).success:
+                    self.logger.error("Card not present or cannot be selected")
                     raise TagError("Card not present or cannot be selected")
                 
                 # Update selected card and clear previous authentication cache
@@ -823,9 +845,11 @@ class RRHFOEM04:
             response = self._send_command(cmd)
             
             if not response:
+                self.logger.error("No response during authentication")
                 raise AuthenticationError("No response during authentication")
                 
             if response[3:5] != STATUS_SUCCESS:
+                self.logger.error(f"Authentication failed with status: {response[3:5]}")
                 raise AuthenticationError(f"Authentication failed with status: {response[3:5]}")
                 
             return RRHFOEM04Result(success=True, message="Operation Successful")
@@ -833,6 +857,7 @@ class RRHFOEM04:
         except (ValidationError, TagError, AuthenticationError):
             raise
         except Exception as e:
+            self.logger.error(f"Unexpected error during authentication: {str(e)}")
             raise AuthenticationError(f"Unexpected error during authentication: {str(e)}")
 
     def ISO14443A_mifareRead(self, uid: str, block_number: int = 0) -> RRHFOEM04Result:
@@ -861,7 +886,7 @@ class RRHFOEM04:
             if uid not in self._mifare_auth_blocks or block_number not in self._mifare_auth_blocks[uid]:
                 if not self.ISO14443A_mifareAuthenticate(uid=uid, block_number=block_number).success:
                     # Clear state on authentication failure
-                    print("Authentication failed before read")
+                    self.logger.error("Authentication failed before read")
                     self._mifare_selected_uid = None
                     self._mifare_auth_blocks.clear()
                     return RRHFOEM04Result(success=False, message="Mifare Authenticate Failed")
@@ -877,16 +902,16 @@ class RRHFOEM04:
 
             response = self._send_command(cmd)
             if response[3:5] != STATUS_SUCCESS:
-                print(f"Read operation failed: {response[3:5]}")
+                self.logger.error(f"Read operation failed: {response[3:5]}")
                 return RRHFOEM04Result(success=False, message="Operation Failed")
 
             # Extract 16 bytes of block data
             block_data = response[5:5 + MIFARE_BLOCK_SIZE]
 
-            return RRHFOEM04Result(success=True, message="Operation Successful", data={"data": ''.join(block_data)})
+            return RRHFOEM04Result(success=True, message="Operation Successful", data=''.join(block_data))
         
         except Exception as e:
-            print(f"Error reading Mifare block: {str(e)}")
+            self.logger.error(f"Error reading Mifare block: {str(e)}")
             return RRHFOEM04Result(success=False, message=f"Operation Failed: <{str(e)}>")
     
     def ISO14443A_mifareWrite(self, uid: str, data: str, block_number: int = 1) -> RRHFOEM04Result:
@@ -925,7 +950,7 @@ class RRHFOEM04:
             if uid not in self._mifare_auth_blocks or block_number not in self._mifare_auth_blocks[uid]:
                 if not self.ISO14443A_mifareAuthenticate(uid=uid, block_number=block_number).success:
                     # Clear state on authentication failure
-                    print("Authentication failed before write")
+                    self.logger.error("Authentication failed before write")
                     self._mifare_selected_uid = None
                     self._mifare_auth_blocks.clear()
                     return RRHFOEM04Result(success=False, message="Mifare Authentication Failed")
@@ -941,12 +966,13 @@ class RRHFOEM04:
 
             response = self._send_command(cmd)
             if response[3:5] != STATUS_SUCCESS:
+                self.logger.error(f"Write operation failed with status: {response[3:5]}")
                 raise CommandError(f"Write operation failed with status: {response[3:5]}")
 
             return RRHFOEM04Result(success=True, message="Operation Successful")
 
         except Exception as e:
-            print(f"Error writing Mifare block: {str(e)}")
+            self.logger.error(f"Error writing Mifare block: {str(e)}")
             return RRHFOEM04Result(success=False, message=f"Operation Failed: <{str(e)}>")
         
     def close(self) -> None:
@@ -958,9 +984,11 @@ class RRHFOEM04:
         2. Releasing the device handle
         3. Resetting the device reference
         """
+        self.logger.debug("Closing device connection")
         if self.device:
             try:
                 self.device.close()
+                self.logger.info("Device connection closed")
             finally:
                 self.device = None
 
