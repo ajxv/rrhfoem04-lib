@@ -580,6 +580,130 @@ unsigned short CalcCRC(unsigned char data[], unsigned char len) {
 - **Error Code**: If an error occurs, then it returns an error code as `FFFFHex`, and also field 4 is absent. Else, the error code is `0000Hex`.
 - **Response**: Contains two bytes ATQ (Answer To Request) response from the card.
 
+## Anti-collision
+
+### Request
+
+| Sr. No. | Parameter               | Length (Byte) | Data        |
+|---------|-------------------------|---------------|-------------|
+| 1       | Request Frame Length    | 1             | 04Hex       |
+| 2       | Command Code            | 2             | 2006Hex     |
+| 3       | Cascade Level           | 1             | XXHex       |
+| 4       | Cyclic Redundancy Check | 2             | XXXXHex     |
+
+---
+
+### Response
+
+| Sr. No. | Parameter               | Length (Byte) | Data          |
+|---------|-------------------------|---------------|---------------|
+| 1       | Response Frame Length   | 1             | 09Hex         |
+| 2       | Command Code            | 2             | 2006Hex       |
+| 3       | Error Code              | 2             | XXXXHex       |
+| 4       | UID                     | 4             | XXXXXXXXHex   |
+| 5       | Cyclic Redundancy Check | 2             | XXXXHex       |
+
+---
+
+#### Notes:
+
+- **Cascade Level**:  
+  - If **cascade level** is **1**, its value is `93Hex`.  
+  - If **cascade level** is **2**, its value is `95Hex`.  
+  - If **cascade level** is **3**, its value is `97Hex`.
+
+- **Error Code**:  
+  - If an error occurs, it returns `FFFFHex`.  
+  - If field 4 is absent, the error code is `0000Hex`.
+
+- **UID**: Contains the **UID** of the card (4 bytes).
+
+
+## Select Command
+
+### Request
+
+| Sr. No. | Parameter               | Length (Byte) | Data          |
+|---------|-------------------------|---------------|---------------|
+| 1       | Request Frame Length    | 1             | 08Hex         |
+| 2       | Command Code            | 2             | 2004Hex       |
+| 3       | Cascade Level           | 1             | XXHex         |
+| 4       | UID                     | 4             | XXXXXXXXHex   |
+| 5       | Cyclic Redundancy Check | 2             | XXXXHex       |
+
+
+### Response
+
+| Sr. No. | Parameter               | Length (Byte) | Data          |
+|---------|-------------------------|---------------|---------------|
+| 1       | Response Frame Length   | 1             | 06Hex         |
+| 2       | Command Code            | 2             | 2004Hex       |
+| 3       | Error Code              | 2             | XXXXHex       |
+| 4       | SAK                     | 1             | XXHex         |
+| 5       | Cyclic Redundancy Check | 2             | XXXXHex       |
+
+
+#### Notes:
+
+- **Cascade Level**:  
+  - If cascade level is 1, the value is `93Hex`.  
+  - If cascade level is 2, the value is `95Hex`.  
+  - If cascade level is 3, the value is `97Hex`.  
+
+- **UID**: UID of the card to be selected (4 Bytes).
+
+- **Error Code**:  
+  - If an error occurs, the error code returns `FFFFHex` and field 4 (SAK) is absent.  
+  - Otherwise, the error code is `0000Hex`.
+
+- **SAK (Select Acknowledge)**:  
+  - If the value is `00`, no further increase in cascade level is required, indicating a complete UID.  
+  - If the cascade bit of SAK is set, further anti-collision loops are needed with an increased cascade level.
+
+## Mifare Authenticate
+
+### Request
+
+| Sr. No. | Parameter               | Length (Byte) | Data          |
+|---------|-------------------------|---------------|---------------|
+| 1       | Request Frame Length    | 1             | 0FHex         |
+| 2       | Command Code            | 2             | 2101Hex       |
+| 3       | UID                     | 4             | XXXXXXXXHex   |
+| 4       | Block No.               | 1             | XXHex         |
+| 5       | Key Type                | 1             | XXHex         |
+| 6       | Key                     | 6             | XXXX..XXXXHex |
+| 7       | Cyclic Redundancy Check | 2             | XXXXHex       |
+
+---
+
+### Response
+
+| Sr. No. | Parameter               | Length (Byte) | Data          |
+|---------|-------------------------|---------------|---------------|
+| 1       | Response Frame Length   | 1             | 05Hex         |
+| 2       | Command Code            | 2             | 2101Hex       |
+| 3       | Error Code              | 2             | XXXXHex       |
+| 4       | Cyclic Redundancy Check | 2             | XXXXHex       |
+
+---
+
+#### Notes:
+
+- **UID**: UID of the tag to be authenticated.
+
+- **Block No.**: Number of blocks to authenticate.
+
+- **Key Type**:  
+  - For **Key A**, the value is `60Hex`.  
+  - For **Key B**, the value is `61Hex`.  
+
+- **Key**: A 6-byte key defined by the user.
+
+- **Error Code**:  
+  - If an error occurs, it returns `FFFFHex`.  
+  - Otherwise, it returns `0000Hex`.
+
+
 ## Mifare Read
 
 ### Request

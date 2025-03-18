@@ -160,8 +160,9 @@ class TestRRHFOEM04(unittest.TestCase):
         """Test ISO14443A_mifareAuthenticate"""
         try:
             block_number = 5
-            uid="E3580128"
 
+            uid = self.reader.ISO14443A_Inventory().data
+            uid = uid if uid else "000000"
             result = self.reader.ISO14443A_mifareAuthenticate(uid, block_number=block_number)
 
             print(result)
@@ -174,9 +175,8 @@ class TestRRHFOEM04(unittest.TestCase):
         """Test ISO14443A mifare read"""
         try:
             block_number = 4
-            uid="E3580128"
 
-            result = self.reader.ISO14443A_mifareRead(uid=uid, block_number=block_number)
+            result = self.reader.ISO14443A_mifareRead(block_number=block_number)
 
             print(result)
             self.assertTrue(result.success, "No data read")
@@ -187,10 +187,11 @@ class TestRRHFOEM04(unittest.TestCase):
         """Test ISO14443A mifare read"""
         try:
             block_number = 4
-            uid="E3580128"
+            # uid = self.reader.ISO14443A_Inventory().data
+            # uid = uid if uid else "000000"
             data = "KJ000F00#"
 
-            result = self.reader.ISO14443A_mifareWrite(uid=uid, data=data, block_number=block_number)
+            result = self.reader.ISO14443A_mifareWrite(data=data, block_number=block_number)
             print(result)
             self.assertTrue(result.success, "Failed to write data")
 
