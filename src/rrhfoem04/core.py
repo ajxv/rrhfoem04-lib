@@ -727,7 +727,9 @@ class RRHFOEM04:
             # Extract UID length and data
             uid_length = int(response[5])
             uid = ''.join(response[6:6 + uid_length])
-
+            
+            # the tag is autoselected on inventory
+            self._mifare_selected_uid = uid
             return RRHFOEM04Result(success=True, message="Operation Successful", data=uid)
             
         except Exception as e:
@@ -772,6 +774,7 @@ class RRHFOEM04:
                 self.logger.error(f"Card selection failed: {response[3:5]}")
                 return RRHFOEM04Result(success=False, message="Operation Failed")
 
+            self._mifare_selected_uid = uid
             return RRHFOEM04Result(success=True, message="Operation Successful")
     
         except Exception as e:
@@ -851,7 +854,12 @@ class RRHFOEM04:
             if response[3:5] != STATUS_SUCCESS:
                 self.logger.error(f"Authentication failed with status: {response[3:5]}")
                 raise AuthenticationError(f"Authentication failed with status: {response[3:5]}")
-                
+
+            # Cache successful authentication
+            if uid not in self._mifare_auth_blocks:
+                self._mifare_auth_blocks[uid] = set()
+            self._mifare_auth_blocks[uid].add(block_number)
+            
             return RRHFOEM04Result(success=True, message="Operation Successful")
             
         except (ValidationError, TagError, AuthenticationError):
@@ -860,7 +868,7 @@ class RRHFOEM04:
             self.logger.error(f"Unexpected error during authentication: {str(e)}")
             raise AuthenticationError(f"Unexpected error during authentication: {str(e)}")
 
-    def ISO14443A_mifareRead(self, uid: str, block_number: int = 0) -> RRHFOEM04Result:
+    def ISO14443A_mifareRead(self, uid: Optional[str] = None, block_number: int = 0) -> RRHFOEM04Result:
         """
         Read a block from an authenticated Mifare Classic card.
         
@@ -871,7 +879,7 @@ class RRHFOEM04:
         3. Active connection maintained since authentication
         
         Args:
-            uid: Card's unique identifier
+        uid: Card's unique identifier. If not provided, the method will attempt to fetch the UID of a nearby card.
             block_number: Memory block to read (0-255)
             
         Returns:
@@ -881,20 +889,17 @@ class RRHFOEM04:
             if not 0 <= block_number <= 255:
                 raise ValueError("Block number must be between 0 and 255")
             
+            # Fetch UID if not provided
+            if not uid:
+                inventory_result = self.ISO14443A_Inventory()
+                if not inventory_result.success or not inventory_result.data:
+                    return RRHFOEM04Result(success=False, message="No card found")
+                uid = inventory_result.data          
+            
             # Authenticate block before reading
-            # Check if this block is already authenticated
-            if uid not in self._mifare_auth_blocks or block_number not in self._mifare_auth_blocks[uid]:
-                if not self.ISO14443A_mifareAuthenticate(uid=uid, block_number=block_number).success:
-                    # Clear state on authentication failure
-                    self.logger.error("Authentication failed before read")
-                    self._mifare_selected_uid = None
-                    self._mifare_auth_blocks.clear()
-                    return RRHFOEM04Result(success=False, message="Mifare Authenticate Failed")
-                
-                # Cache successful authentication
-                if uid not in self._mifare_auth_blocks:
-                    self._mifare_auth_blocks[uid] = set()
-                self._mifare_auth_blocks[uid].add(block_number)
+            auth_result = self.ISO14443A_mifareAuthenticate(uid=uid, block_number=block_number)
+            if not auth_result.success:
+                return RRHFOEM04Result(success=False, message="Mifare Authenticate Failed")
             
             # Prepare and send read command
             cmd = CMD_ISO14443A_MIFARE_READ.copy()
@@ -914,7 +919,7 @@ class RRHFOEM04:
             self.logger.error(f"Error reading Mifare block: {str(e)}")
             return RRHFOEM04Result(success=False, message=f"Operation Failed: <{str(e)}>")
     
-    def ISO14443A_mifareWrite(self, uid: str, data: str, block_number: int = 1) -> RRHFOEM04Result:
+    def ISO14443A_mifareWrite(self, data: str, uid: Optional[str] = None, block_number: int = 1) -> RRHFOEM04Result:
         """
         Write data to a specific block on an authenticated Mifare Classic card.
         
@@ -925,8 +930,8 @@ class RRHFOEM04:
         3. Active connection maintained since authentication
         
         Args:
-            uid: Card's unique identifier.
             data: Data to write to the block, provided as a 16-byte string (32 hex characters).
+            uid: Card's unique identifier.
             block_number: Memory block to write (0-255). Defaults to 1 since block 0 is typically reserved 
                         for manufacturer data.
         
@@ -945,7 +950,14 @@ class RRHFOEM04:
             if data_bytes and len(data_bytes) < MIFARE_BLOCK_SIZE:
                 data_bytes = data_bytes.ljust(MIFARE_BLOCK_SIZE, b'\x00')
 
-            # Authenticate block before reading
+            # Fetch UID if not provided
+            if not uid:
+                inventory_result = self.ISO14443A_Inventory()
+                if not inventory_result.success or not inventory_result.data:
+                    return RRHFOEM04Result(success=False, message="No card found")
+                uid = inventory_result.data       
+
+            # Authenticate block before writing
             # Check if this block is already authenticated
             if uid not in self._mifare_auth_blocks or block_number not in self._mifare_auth_blocks[uid]:
                 if not self.ISO14443A_mifareAuthenticate(uid=uid, block_number=block_number).success:
