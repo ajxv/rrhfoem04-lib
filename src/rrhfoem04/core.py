@@ -107,7 +107,7 @@ class RRHFOEM04:
                 crc = ((crc << 1) ^ 0x1021) if crc & 0x8000 else (crc << 1)
         return (~crc)  # Return inverted CRC
 
-    def _send_command(self, cmd_data: List[int]) -> Optional[str]:
+    def _send_command(self, cmd_data: List[int]) -> Optional[List[str]]:
         """
         Send command to device and receive response with robust error handling.
 
@@ -125,7 +125,8 @@ class RRHFOEM04:
             cmd_data: List of command bytes to send
             
         Returns:
-            Optional[str]: Hex string response if successful, None if no response
+            Optional[List[str]]: Response as a list of uppercase hex byte strings (e.g., ["AA","BB",...])
+            if successful, or None if no response is received within the timeout
             
         Raises:
             ConnectionError: If device is not connected
@@ -146,24 +147,36 @@ class RRHFOEM04:
             cmd = bytes([0x00] + cmd_data + [(crc >> 8) & 0xFF, crc & 0xFF] + 
                        [0] * (BUFFER_SIZE - len(cmd_data) - 3))
 
-            # Clear input buffer before sending command
-            while self.device.read(BUFFER_SIZE):
-                pass
+            # Quickly drain any stale data without busy-waiting
+            for _ in range(4):  # cap drain attempts to avoid long spins
+                if not self.device.read(BUFFER_SIZE):
+                    break
+                time.sleep(0.001)
 
             # Send command and update timing
             self.device.write(cmd)
             self._last_command_time = time.time()
-            
-            # Wait for device to process command
-            time.sleep(DEFAULT_TIMEOUT)
 
-            # Implement retry logic for response reading
-            for _ in range(MAX_RETRIES):
+            # Poll for response up to DEFAULT_TIMEOUT with small sleeps
+            deadline = time.time() + DEFAULT_TIMEOUT
+            response = None
+            while time.time() < deadline:
                 response = self.device.read(BUFFER_SIZE)
                 if response:
-                    # Convert response to hex string format
-                    return re.findall('..?', self._byte_list_to_hex_string(response))
+                    break
                 time.sleep(RETRY_DELAY)
+
+            # If still nothing, try a few quick extra retries (for jitter)
+            if not response:
+                for _ in range(MAX_RETRIES):
+                    response = self.device.read(BUFFER_SIZE)
+                    if response:
+                        break
+                    time.sleep(RETRY_DELAY)
+
+            if response:
+                # Faster hex conversion without regex
+                return [f"{b:02X}" for b in response]
 
             self.logger.warning("No response received after retries")
             return None
