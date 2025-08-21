@@ -970,20 +970,11 @@ class RRHFOEM04:
                     return RRHFOEM04Result(success=False, message="No card found")
                 uid = inventory_result.data       
 
-            # Authenticate block before writing
-            # Check if this block is already authenticated
-            if uid not in self._mifare_auth_blocks or block_number not in self._mifare_auth_blocks[uid]:
-                if not self.ISO14443A_mifareAuthenticate(uid=uid, block_number=block_number).success:
-                    # Clear state on authentication failure
-                    self.logger.error("Authentication failed before write")
-                    self._mifare_selected_uid = None
-                    self._mifare_auth_blocks.clear()
-                    return RRHFOEM04Result(success=False, message="Mifare Authentication Failed")
-
-                # Cache successful authentication
-                if uid not in self._mifare_auth_blocks:
-                    self._mifare_auth_blocks[uid] = set()
-                self._mifare_auth_blocks[uid].add(block_number)
+            # Always authenticate block before writing
+            auth_result = self.ISO14443A_mifareAuthenticate(uid=uid, block_number=block_number)
+            if not auth_result.success:
+                self.logger.error("Authentication failed before write")
+                return RRHFOEM04Result(success=False, message="Mifare Authentication Failed")
 
             # Prepare and send write command
             cmd = CMD_ISO14443A_MIFARE_WRITE.copy()
