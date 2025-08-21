@@ -18,12 +18,11 @@ from .constants import *
 from .exceptions import *
 from .utils import RRHFOEM04Result
 
-# Configure logging
+# Configure logging: default to console only; file logging can be enabled per instance
 logging.basicConfig(
     level=logging.DEBUG,
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
     handlers=[
-        logging.FileHandler("rrhfoem04.log"),
         logging.StreamHandler()
     ]
 )
@@ -37,15 +36,21 @@ class RRHFOEM04:
     implementing proper timing controls and error handling for reliable operation.
     """
 
-    def __init__(self, auto_connect: bool = True):
+    def __init__(self, auto_connect: bool = True, log_to_file: bool = False, log_file_name: str = "rrhfoem04.log"):
         """
-        Initialize the RRHFOEM04 reader interface.
-        
+        Initializes the RRHFOEM04 reader interface.
         Args:
-            auto_connect: If True, automatically attempts to connect to the device
-                        during initialization.
+            auto_connect (bool): If True, automatically attempts to connect to the device during initialization. Defaults to True.
+            log_to_file (bool): If True, enables logging to a file for this instance. Defaults to False.
+            log_file_name (str): The name of the log file if file logging is enabled. Defaults to "rrhfoem04.log".
         """
         self.logger = logging.getLogger(self.__class__.__name__)
+        # Optionally enable file logging per instance
+        if log_to_file and not any(isinstance(h, logging.FileHandler) for h in self.logger.handlers):
+            file_handler = logging.FileHandler(log_file_name)
+            file_handler.setLevel(logging.DEBUG)
+            file_handler.setFormatter(logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s'))
+            self.logger.addHandler(file_handler)
         self.logger.debug("Initializing RRHFOEM04 interface")
         self.device: Optional[hid.device] = None
         self._last_command_time = 0  # Tracks timing between commands
