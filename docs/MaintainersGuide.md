@@ -67,6 +67,8 @@ Central constants live in `constants.py`:
 - Timing constants: `COMMAND_INTERVAL`, `DEFAULT_TIMEOUT`, `RETRY_DELAY`, `MAX_RETRIES`, `BUFFER_SIZE`.
 - Status codes: `STATUS_SUCCESS` etc.
 
+For exhaustive frame formats, flag meanings, and full command tables, see `RRHFOEM04_ProtocolReference.md` (kept separate to avoid duplication here). When updating protocol behavior, modify that reference first, then adjust constants and this section if needed.
+
 When adding a new command:
 1. Add raw command definition + any new status codes in `constants.py`.
 2. Implement wrapper method in `core.py` using `_send_command()`.
