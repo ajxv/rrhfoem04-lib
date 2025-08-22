@@ -6,11 +6,42 @@ This Python library provides an interface to interact with the RRHFOEM04 RFID/NF
 
 ## Features
 
-- **Multiple Protocol Support**: Supports ISO15693, ISO14443A, and Mifare.
-- **Automatic Connection Management**: Easily manage device connections.
-- **Error Handling**: Robust error handling and recovery mechanisms.
-- **Timing Controls**: Built-in timing controls for reliable communication.
-- **Single and Multi-Block Operations**: Support for single and multiple block read/write operations.
+| Capability | Description |
+|------------|-------------|
+| Multi-Protocol | ISO15693, ISO14443A & Mifare operations |
+| Inventory & Tag Ops | Single-slot & 16-slot inventory, select, read, write |
+| Robust Timing | Command pacing, retries, non-blocking HID reads |
+| Structured Results | All ops return `RRHFOEM04Result(success, message, data)` |
+| Error Handling | Custom exception hierarchy + logged context |
+| Optional File Logging | `log_to_file=True` adds `rrhfoem04.log` handler |
+
+## Installation
+
+```bash
+pip install rrhfoem04-lib
+```
+
+System packages (Linux) sometimes required for `hidapi`:
+```bash
+sudo apt-get update && sudo apt-get install -y libhidapi-hidraw0 libhidapi-libusb0
+```
+
+Upgrade:
+```bash
+pip install -U rrhfoem04-lib
+```
+
+## Requirements
+
+- Python >= 3.12
+- USB access to RRHFOEM04 device
+
+### Device Permissions (Linux)
+Instead of running Python with `sudo`, consider adding a udev rule (example):
+```
+SUBSYSTEM=="hidraw", ATTRS{idVendor}=="vvvv", ATTRS{idProduct}=="pppp", MODE="0666"
+```
+Replace `vvvv`/`pppp` with the reader's vendor/product IDs, reload with `udevadm control --reload && udevadm trigger`.
 
 ## Usage
 
@@ -40,16 +71,37 @@ reader.close()
 
 > **Note:**
 >
-> The `hidapi` module (dependency to interact with hid modules) requires superuser privilage to run. Therefore, run your python script with `sudo` if you are using linux based system. eg: `sudo python3 script.py`
+> The `hidapi` module may require additional system libraries or device permissions. Prefer udev rules over running entire scripts with sudo.
+
+### Context Manager Example
+```python
+from rrhfoem04 import RRHFOEM04
+
+with RRHFOEM04(auto_connect=True) as reader:
+    inv = reader.ISO15693_singleSlotInventory()
+    if inv.success:
+        print("Tags:", inv.data)
+```
+
+### Result Object
+Every high-level call returns `RRHFOEM04Result`:
+```python
+res = reader.getReaderInfo()
+if res.success:
+    print(res.data)
+else:
+    print(res.message)
+```
 
 
 ## Contributing
 
-Contributions are welcome! Please refer to the docs folder for more details on the library's internals and how to contribute.
+Contributions are welcome! See the [Contributing Guide](docs/CONTRIBUTING.md). For deeper internals and extension guidelines consult the [Maintainers Guide](docs/MaintainersGuide.md).
 
 ## Documentation
 
-- [Maintainers Guide](docs/MaintainersGuide.md) – internal architecture, extension, release & support practices.
+- [Maintainers Guide](docs/MaintainersGuide.md) – architecture, extension, release & support practices.
+- [Protocol Reference](docs/RRHFOEM04_ProtocolReference.md) – frame formats, flags, command tables.
 - [Publishing to PyPI](docs/PublishingToPyPI.md) – step-by-step release instructions.
 
 ## License
