@@ -47,6 +47,11 @@ reader.close()
 
 Contributions are welcome! Please refer to the docs folder for more details on the library's internals and how to contribute.
 
+## Documentation
+
+- [Maintainers Guide](docs/MaintainersGuide.md) – internal architecture, extension, release & support practices.
+- [Publishing to PyPI](docs/PublishingToPyPI.md) – step-by-step release instructions.
+
 ## License
 
 This project is licensed under the MIT License.
