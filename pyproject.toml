@@ -14,7 +14,7 @@ license = {file = "LICENSE"}
 requires-python = ">=3.12"
 dependencies = [
   "hidapi==0.14.0.post4",
-  "setuptools==80.9.0",
+  "setuptools==83.0.0",
 ]
 classifiers = [
     "Programming Language :: Python :: 3",
